@@ -634,6 +634,7 @@ const dom = {
   regimeBadge: document.getElementById("regimeBadge"),
   refreshButton: document.getElementById("refreshButton"),
   summaryGrid: document.getElementById("summaryGrid"),
+  heroSpotlight: document.getElementById("heroSpotlight"),
   commandDeckPanel: document.getElementById("commandDeckPanel"),
   mandateCard: document.getElementById("mandateCard"),
   quickCheckInput: document.getElementById("quickCheckInput"),
@@ -2532,15 +2533,15 @@ function opportunityHeadline(token) {
   const lane = laneLabel(token?.warrant?.lane);
 
   if (token?.warrant?.status === "Approved") {
-    return `真实利润窗口已打开，当前可执行 edge ${pct(liveEdge)}，建议走 ${lane}。`;
+    return `现在能做，优先走 ${lane}，当前净边际 ${pct(liveEdge)}。`;
   }
   if (token?.warrant?.status === "Deferred") {
-    return `机会正在形成，当前窗口 ${pct(rawEdge)}，但确认度还不够，先放入观察队列。`;
+    return `先盯住，当前窗口 ${pct(rawEdge)}，但还没到出手时点。`;
   }
   if (token?.warrant?.status === "Revoked") {
-    return `表面上有 ${pct(rawEdge)} 的边际，但系统判断这更像假机会或坏市场。`;
+    return `别碰，表面边际 ${pct(rawEdge)}，但这更像假机会或坏市场。`;
   }
-  return `当前利润空间不足以覆盖风险与执行摩擦，不建议投入注意力或仓位。`;
+  return `跳过，当前利润空间不值得占用仓位和注意力。`;
 }
 
 function opportunityExplain(token) {
@@ -2821,12 +2822,10 @@ function renderTopbar() {
 function renderSummary() {
   const summary = state.overview.approvalSummary || {};
   const approvedTop = symbolsToTokens(state.overview.desk?.approved)[0] || state.overview.tokens.find((token) => token.warrant?.status === "Approved");
-  const reapprovalCount = (state.overview.desk?.reapproval || []).length || deriveDesk("reapproval").length;
   const approvedTokens = state.overview.tokens.filter((token) => token.warrant?.status === "Approved");
   const avgExpectedNetPnl = approvedTokens.length
     ? approvedTokens.reduce((sum, token) => sum + opportunityExpectedNetPnlUsd(token), 0) / approvedTokens.length
     : 0;
-  const bestOpportunity = [...state.overview.tokens].sort((left, right) => opportunityScore(right) - opportunityScore(left))[0];
   const liveAlerts = state.overview.alertFeed || [];
   const openPortfolio = portfolioEntries().filter((entry) => entry.positionStatus !== "closed");
   const openPortfolioMark = openPortfolio.reduce(
@@ -2834,55 +2833,37 @@ function renderSummary() {
     0,
   );
   const reviewPortfolioCount = openPortfolio.filter((entry) => portfolioNeedsReview(entry, getToken(entry.symbol))).length;
-  const portfolioWatchItems = portfolioWatchtowerItems();
-  const urgentPortfolioCount = portfolioWatchItems.filter((item) => item.severity === "high").length;
-  const alertCounts = positionAlertCounts();
-  const policyStats = positionAlertPolicyStats();
-  const alertPreset = currentPositionAlertPreset();
-  const recommendedPreset = recommendedPositionAlertPreset();
 
   const cards = [
     {
-      label: "Actionable Now",
-      value: summary.approved ?? 0,
-      note: approvedTop ? `${approvedTop.symbol} 仍是当前最干净的真实机会` : "当前没有达到可执行标准的机会",
+      label: "现在该看",
+      value: approvedTop?.symbol || "--",
+      note: approvedTop
+        ? `${laneLabel(approvedTop.warrant?.lane)} · 净边际 ${pct(executableEdgePct(approvedTop))}`
+        : "当前没有通过过滤器的机会",
       tone: "approved",
     },
     {
-      label: "Avg Est Net PnL",
-      value: approvedTokens.length ? signedCompactUsd(avgExpectedNetPnl) : "--",
+      label: "可执行",
+      value: summary.approved ?? 0,
       note: approvedTokens.length
-        ? `按当前 Capital ${compactUsd(state.overview.userMandate?.settings?.referenceCapitalUsd)} 估算`
-        : "当前还没有可统计的可执行利润窗口",
+        ? `按当前资金规模估算，平均净收益 ${signedCompactUsd(avgExpectedNetPnl)}`
+        : "当前没有处于可执行区的窗口",
       tone: "deferred",
     },
     {
-      label: "Killed Fakes",
+      label: "别碰",
       value: (summary.revoked ?? 0) + (summary.rejected ?? 0),
-      note: "被系统拦掉的伪机会、坏市场和不可执行窗口",
+      note: "这些是系统主动替你拦下的伪机会和坏市场",
       tone: "revoked",
     },
     {
-      label: "Live Alerts",
-      value: liveAlerts.length,
-      note: liveAlerts[0]?.headline || (bestOpportunity ? `${bestOpportunity.symbol} 当前机会分领先，复审队列 ${reapprovalCount} 个` : "等待首轮实时机会扫描"),
-      tone: "muted",
-    },
-    {
-      label: "Portfolio Live",
+      label: "我的组合",
       value: openPortfolio.length,
       note: openPortfolio.length
-        ? `浮动 Mark ${signedCompactUsd(openPortfolioMark)} · ${reviewPortfolioCount} 笔待复审 · ${urgentPortfolioCount} 笔高优先`
-        : "还没有进入持续跟踪的 paper position",
+        ? `浮动 ${signedCompactUsd(openPortfolioMark)} · ${reviewPortfolioCount} 笔待复审`
+        : liveAlerts[0]?.headline || "还没有建立自己的观察组合",
       tone: reviewPortfolioCount ? "deferred" : openPortfolio.length ? "approved" : "muted",
-    },
-    {
-      label: "My Alerts",
-      value: alertCounts.unread,
-      note: state.positionAlertPrefs.desktopEnabled
-        ? `${positionAlertPresetLabel(alertPreset)} · Suggested ${positionAlertPresetLabel(recommendedPreset.name)} · Reopened ${policyStats.reopened}`
-        : `${positionAlertPresetLabel(alertPreset)} · Suggested ${positionAlertPresetLabel(recommendedPreset.name)} · Reopened ${policyStats.reopened}`,
-      tone: alertCounts.high ? "revoked" : alertCounts.unread ? "deferred" : alertCounts.resolved ? "approved" : "muted",
     },
   ];
 
@@ -2899,6 +2880,65 @@ function renderSummary() {
     .join("");
 }
 
+function renderHeroSpotlight() {
+  if (!dom.heroSpotlight) return;
+
+  const bestToken =
+    symbolsToTokens(state.overview.desk?.approved)[0] ||
+    [...state.overview.tokens].sort((left, right) => opportunityScore(right) - opportunityScore(left))[0];
+
+  if (!bestToken) {
+    dom.heroSpotlight.innerHTML = `<div class="empty-card">等待首轮机会扫描。</div>`;
+    return;
+  }
+
+  const brief = bestToken.executionBrief || {};
+  const whyNow = (bestToken.opportunity?.whyNow || []).slice(0, 2);
+
+  dom.heroSpotlight.innerHTML = `
+    <div class="hero-spotlight-card ${verdictClass(bestToken.warrant?.status)}" data-symbol="${bestToken.symbol}">
+      <div class="hero-spotlight-head">
+        <div>
+          <span class="eyebrow">Opportunity Spotlight</span>
+          <strong>${bestToken.symbol}</strong>
+          <p>${bestToken.name}</p>
+        </div>
+        <span class="status-pill ${verdictClass(bestToken.warrant?.status)}">${verdictLabels[bestToken.warrant?.status] || bestToken.warrant?.status}</span>
+      </div>
+      <div class="hero-spotlight-metrics">
+        <div class="metric-card">
+          <span>Lane</span>
+          <strong>${laneLabel(bestToken.warrant?.lane)}</strong>
+        </div>
+        <div class="metric-card">
+          <span>Net Edge</span>
+          <strong>${pct(executableEdgePct(bestToken))}</strong>
+        </div>
+        <div class="metric-card">
+          <span>Est Net</span>
+          <strong>${signedCompactUsd(opportunityExpectedNetPnlUsd(bestToken))}</strong>
+        </div>
+      </div>
+      <div class="spotlight-brief">
+        <p class="spotlight-summary">${brief.summary || bestToken.signalNote}</p>
+        <div class="bullet-list">
+          ${whyNow.map((item) => `<div class="bullet-item">${item}</div>`).join("")}
+        </div>
+      </div>
+      <div class="hero-lane-row">
+        <span class="hero-lane-pill">${brief.posture || "Watch"}</span>
+        <span class="hero-lane-pill">${compactMinutes(bestToken.warrant?.ttlMinutes || 0)}</span>
+        <span class="hero-lane-pill">${bestToken.opportunity?.band || "Opportunity"}</span>
+      </div>
+    </div>
+  `;
+
+  dom.heroSpotlight.querySelector("[data-symbol]")?.addEventListener("click", () => {
+    state.selected = bestToken.symbol;
+    render();
+  });
+}
+
 function renderCommandDeck() {
   const deck = commandDeckBrief();
 
@@ -2909,18 +2949,16 @@ function renderCommandDeck() {
           <strong>${deck.title}</strong>
           <p>${deck.summaryText}</p>
         </div>
-        <span class="status-pill ${deck.tone}">${deck.metrics.suggestedPreset}</span>
+        <span class="status-pill ${deck.tone}">今日重点</span>
       </div>
       <div class="tag-row">
-        <span class="tag">Current ${deck.metrics.currentPreset}</span>
-        <span class="tag">Suggested ${deck.metrics.suggestedPreset}</span>
         <span class="tag">Actionable ${deck.metrics.actionable}</span>
         <span class="tag">Fake ${deck.metrics.fakeCount}</span>
         <span class="tag">High Risk ${deck.metrics.highRiskCount}</span>
+        <span class="tag">${deck.metrics.regime}</span>
       </div>
       <div class="action-row">
         <button id="commandDeckFocus" class="action-button" ${deck.primaryFocus ? "" : "disabled"}>聚焦首要任务</button>
-        <button id="commandDeckCopy" class="secondary-button">复制今日作战卡</button>
       </div>
     </div>
     <div class="command-deck-grid">
@@ -2944,10 +2982,6 @@ function renderCommandDeck() {
     if (!deck.primaryFocus) return;
     state.selected = deck.primaryFocus;
     render();
-  });
-
-  document.getElementById("commandDeckCopy")?.addEventListener("click", (event) => {
-    copyText(commandDeckExportText(deck), event.currentTarget, "已复制");
   });
 
   dom.commandDeckPanel.querySelectorAll("[data-command-focus]").forEach((item) => {
@@ -3190,10 +3224,10 @@ function renderQuickCheck(messageToken) {
   if (state.quickCheckPending) {
     dom.quickCheckResult.innerHTML = `
       <div class="quick-result empty">
-        正在请求实时机会判断…
+        正在判断…
         <div class="tag-row">
           <span class="tag">${(dom.quickCheckInput.value || "Symbol").toUpperCase()}</span>
-          <span class="tag">${mandateSettingsDiffer(state.mandateDraft, state.activeMandate) ? "Draft Mandate" : "Applied Mandate"}</span>
+          <span class="tag">${mandateSettingsDiffer(state.mandateDraft, state.activeMandate) ? "当前草稿" : "当前设置"}</span>
         </div>
       </div>
     `;
@@ -3227,12 +3261,9 @@ function renderQuickCheck(messageToken) {
       <p class="quick-brief">${brief.primaryAction}</p>
       <div class="tag-row">
         <span class="tag ${laneClass(token.warrant?.lane)}">${laneLabel(token.warrant?.lane)}</span>
-        <span class="tag">${edgeChipLabel(token)} ${pct(executableEdgePct(token))}</span>
-        <span class="tag">Score ${opportunityScore(token)}</span>
-        <span class="tag">Net ${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</span>
+        <span class="tag">Edge ${pct(executableEdgePct(token))}</span>
+        <span class="tag">预估 ${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</span>
         <span class="tag">TTL ${compactMinutes(token.warrant?.ttlMinutes || 0)}</span>
-        <span class="tag">Budget ${token.warrant?.riskBudgetPct || 0}%</span>
-        <span class="tag">${scopeLabel}</span>
         ${checkedAt ? `<span class="tag">Checked ${checkedAt}</span>` : ""}
       </div>
     </div>
@@ -3305,23 +3336,25 @@ function renderFilters() {
 }
 
 function buildDecisionCard(token) {
+  const brief = executionBrief(token);
   return `
     <article class="decision-card ${verdictClass(token.warrant?.status)}" data-symbol="${token.symbol}">
       <div class="decision-head">
         <div>
           <strong>${token.symbol}</strong>
-          <span>${token.name} · ${token.theme} · ${opportunityStateLabel(token)}</span>
+          <span>${token.name}</span>
         </div>
         <span class="status-pill ${verdictClass(token.warrant?.status)}">${verdictLabels[token.warrant?.status] || token.warrant?.status || "观察中"}</span>
       </div>
       <p>${opportunityHeadline(token)}</p>
+      <div class="review-note">${brief.primaryAction}</div>
       <div class="decision-metrics">
         <div>
-          <span>Opportunity</span>
-          <strong>${opportunityScore(token)}</strong>
+          <span>预估</span>
+          <strong>${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</strong>
         </div>
         <div>
-          <span>${edgeChipLabel(token)}</span>
+          <span>Edge</span>
           <strong>${pct(executableEdgePct(token))}</strong>
         </div>
         <div>
@@ -3384,11 +3417,7 @@ function renderAlertFeed() {
           )
           .join("")}
       </div>
-      <div class="tag-row">
-        <span class="tag">High ${counts.high || 0}</span>
-        <span class="tag">Medium ${counts.medium || 0}</span>
-        <span class="tag">Low ${counts.low || 0}</span>
-      </div>
+      <span class="tag">高 ${counts.high || 0} · 中 ${counts.medium || 0} · 低 ${counts.low || 0}</span>
     </div>
     ${
       items.length
@@ -3403,11 +3432,8 @@ function renderAlertFeed() {
                   <p>${item.headline}</p>
                   <div class="tag-row">
                     <span class="tag ${laneClass(item.lane)}">${laneLabel(item.lane)}</span>
-                    <span class="tag">${verdictLabels[item.status] || item.status}</span>
-                    <span class="tag">Score ${item.score}</span>
-                    <span class="tag">Net ${pct(item.netEdgePct || 0)}</span>
-                    <span class="tag">PnL ${signedCompactUsd(item.expectedNetPnlUsd || 0)}</span>
-                    <span class="tag">Δ ${signedCompactUsd(item.pnlDeltaUsd || 0)}</span>
+                    <span class="tag">净边际 ${pct(item.netEdgePct || 0)}</span>
+                    <span class="tag">预估 ${signedCompactUsd(item.expectedNetPnlUsd || 0)}</span>
                     <span class="tag">TTL ${compactMinutes(item.ttlMinutes || 0)}</span>
                   </div>
                   <div class="review-note">${item.body}</div>
@@ -3431,25 +3457,13 @@ function renderAlertFeed() {
 
 function renderPortfolioWatchtower() {
   const items = portfolioWatchtowerItems();
-  const summary = {
-    high: items.filter((item) => item.severity === "high").length,
-    medium: items.filter((item) => item.severity === "medium").length,
-    low: items.filter((item) => item.severity === "low").length,
-  };
 
   if (!items.length) {
-    dom.portfolioWatchtower.innerHTML = `<div class="empty-card">当前还没有进入 watchtower 的组合提醒。你记成“准备做”的机会如果 thesis 开始坏掉，会优先出现在这里。</div>`;
+    dom.portfolioWatchtower.innerHTML = `<div class="empty-card">还没有需要你处理的持仓风险。</div>`;
     return;
   }
 
   dom.portfolioWatchtower.innerHTML = `
-    <div class="alert-toolbar">
-      <div class="tag-row">
-        <span class="tag">High ${summary.high}</span>
-        <span class="tag">Medium ${summary.medium}</span>
-        <span class="tag">Low ${summary.low}</span>
-      </div>
-    </div>
     ${items
       .map(
         (item) => `
@@ -3461,11 +3475,8 @@ function renderPortfolioWatchtower() {
             <p>${item.headline}</p>
             <div class="tag-row">
               <span class="tag ${laneClass(item.lane)}">${laneLabel(item.lane)}</span>
-              <span class="tag">Policy ${symbolAlertPolicyLabel(symbolAlertPolicy(item.symbol))}</span>
-              <span class="tag">${item.statusLabel}</span>
               <span class="tag">Mark ${signedCompactUsd(item.markPnlUsd || 0)}</span>
-              <span class="tag">${item.markChangePct != null ? pct(item.markChangePct) : "--"}</span>
-              <span class="tag">Live ${signedCompactUsd(item.liveNetPnlUsd || 0)}</span>
+              <span class="tag">当前 ${signedCompactUsd(item.liveNetPnlUsd || 0)}</span>
               <span class="tag">Hold ${item.holdLabel}</span>
               ${item.ttlMinutes ? `<span class="tag">TTL ${compactMinutes(item.ttlMinutes)}</span>` : ""}
             </div>
@@ -4079,17 +4090,15 @@ function renderCapitalQueue(list) {
           <div class="queue-main">
             <div class="queue-symbol">
               <strong>${token.symbol}</strong>
-              <span>${token.name} · ${token.chain} · ${token.theme}</span>
+              <span>${token.name}</span>
             </div>
             <p>${opportunityHeadline(token)}</p>
           </div>
           <div class="queue-side">
             <span class="status-pill ${verdictClass(token.warrant?.status)}">${verdictLabels[token.warrant?.status] || token.warrant?.status || "观察中"}</span>
-            <span class="queue-metric">Score ${opportunityScore(token)}</span>
-            <span class="queue-metric">${edgeChipLabel(token)} ${pct(executableEdgePct(token))}</span>
-            <span class="queue-metric">Net ${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</span>
+            <span class="queue-metric">Edge ${pct(executableEdgePct(token))}</span>
+            <span class="queue-metric">预估 ${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</span>
             <span class="queue-metric ${laneClass(token.warrant?.lane)}">${laneLabel(token.warrant?.lane)}</span>
-            <span class="queue-metric">Budget ${token.warrant?.riskBudgetPct || 0}%</span>
             <span class="queue-metric">TTL ${compactMinutes(token.warrant?.ttlMinutes || 0)}</span>
           </div>
         </article>
@@ -4385,62 +4394,41 @@ function renderInspector(token) {
   const currentAlertPolicy = symbolAlertPolicy(token.symbol);
   const currentPolicyTone = symbolAlertPolicyTone(currentAlertPolicy);
   const policySnoozedUntil = snoozedUntilForSymbol(token.symbol);
-  const policyReopenedReady = resolvedAlertCount > 0;
   const portfolioMarkUsd = portfolioEntry ? portfolioMarkPnlUsd(portfolioEntry, token) : null;
-  const portfolioMarkPct = portfolioEntry ? portfolioMarkChangePct(portfolioEntry, token) : null;
   const portfolioLiveNetUsd = portfolioEntry ? portfolioLiveNetPnlUsd(portfolioEntry, token) : null;
-  const portfolioEdgeDrift = portfolioEntry ? portfolioEdgeDriftPct(portfolioEntry, token) : null;
+  const primaryWhy = (token.opportunity?.whyNow || [])[0] || opportunityExplain(token);
+  const firstRiskRule = (token.warrant?.invalidationRules || [])[0] || "当前没有额外风险提示。";
 
   dom.inspector.innerHTML = `
     <div class="inspector-head">
       <div>
-        <p class="eyebrow">Opportunity Case</p>
+        <p class="eyebrow">Selected Opportunity</p>
         <strong>${token.symbol}</strong>
-        <span>${token.name} · ${token.theme}</span>
-        <p class="inspector-copy">${opportunityHeadline(token)}</p>
+        <span>${token.name}</span>
+        <p class="inspector-copy">${primaryWhy}</p>
       </div>
       <span class="status-pill ${verdictClass(token.warrant?.status)}">${verdictLabels[token.warrant?.status] || token.warrant?.status || "观察中"}</span>
     </div>
 
     <div class="inspector-grid">
       <div class="metric-card">
-        <span>Opportunity</span>
-        <strong>${opportunityScore(token)}</strong>
-      </div>
-      <div class="metric-card">
-        <span>${edgeChipLabel(token)}</span>
-        <strong>${pct(executableEdgePct(token))}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Raw Edge</span>
-        <strong>${pct(rawEdgePct(token))}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Risk Budget</span>
-        <strong>${token.warrant?.riskBudgetPct || 0}%</strong>
-      </div>
-      <div class="metric-card">
-        <span>Ref Capital</span>
-        <strong>${compactUsd(opportunityReferenceCapitalUsd(token))}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Suggested Size</span>
-        <strong>${compactUsd(opportunitySuggestedNotionalUsd(token))}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Est Gross PnL</span>
-        <strong>${signedCompactUsd(opportunityExpectedGrossPnlUsd(token))}</strong>
-      </div>
-      <div class="metric-card">
-        <span>Est Net PnL</span>
+        <span>预估收益</span>
         <strong>${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</strong>
       </div>
       <div class="metric-card">
-        <span>Lane</span>
+        <span>净边际</span>
+        <strong>${pct(executableEdgePct(token))}</strong>
+      </div>
+      <div class="metric-card">
+        <span>建议仓位</span>
+        <strong>${compactUsd(opportunitySuggestedNotionalUsd(token))}</strong>
+      </div>
+      <div class="metric-card">
+        <span>执行路径</span>
         <strong>${laneLabel(token.warrant?.lane)}</strong>
       </div>
       <div class="metric-card">
-        <span>TTL</span>
+        <span>下次复审</span>
         <strong>${compactMinutes(token.warrant?.ttlMinutes || 0)}</strong>
       </div>
     </div>
@@ -4449,47 +4437,32 @@ function renderInspector(token) {
       portfolioEntry
         ? `
           <div class="subsection">
-            <span class="field-label">Portfolio Snapshot</span>
+            <span class="field-label">My Position</span>
             <div class="brief-card ${portfolioToneClass}">
               <div class="brief-head">
                 <div>
-                  <strong>${portfolioEntry.positionStatus === "closed" ? "Closed Position" : "Paper Position Live"}</strong>
-                  <p>${portfolioEntry.positionStatus === "closed" ? "这笔 paper position 已关闭，但仍保留 thesis 轨迹与表现快照。" : "这笔机会已经被你记成准备做，现在可以持续看 thesis 是否仍然成立。"}</p>
+                  <strong>${portfolioEntry.positionStatus === "closed" ? "已关闭" : "跟踪中"}</strong>
+                  <p>${portfolioEntry.positionStatus === "closed" ? "这笔记录已关闭。" : "这笔机会正在你的观察组合里持续跟踪。"}</p>
                 </div>
                 <span class="status-pill ${portfolioToneClass === "muted" ? "deferred" : portfolioToneClass}">${portfolioPhase}</span>
               </div>
               <div class="brief-grid">
                 <div class="metric-card">
-                  <span>Entry Price</span>
-                  <strong>${price(portfolioEntry.entryPriceUsd)}</strong>
-                </div>
-                <div class="metric-card">
-                  <span>Mark Price</span>
-                  <strong>${price(portfolioMarkPrice(portfolioEntry, token))}</strong>
-                </div>
-                <div class="metric-card">
-                  <span>Mark PnL</span>
+                  <span>浮动</span>
                   <strong>${signedCompactUsd(portfolioMarkUsd)}</strong>
                 </div>
                 <div class="metric-card">
-                  <span>Mark Delta</span>
-                  <strong>${portfolioMarkPct != null ? pct(portfolioMarkPct) : "--"}</strong>
-                </div>
-                <div class="metric-card">
-                  <span>Live Net</span>
+                  <span>当前机会</span>
                   <strong>${signedCompactUsd(portfolioLiveNetUsd)}</strong>
                 </div>
                 <div class="metric-card">
-                  <span>Edge Drift</span>
-                  <strong>${portfolioEdgeDrift != null ? pct(portfolioEdgeDrift) : "--"}</strong>
+                  <span>持有时长</span>
+                  <strong>${portfolioHoldLabel(portfolioEntry)}</strong>
                 </div>
               </div>
               <div class="tag-row">
-                <span class="tag">Opened ${replayTimestamp(portfolioEntry.createdAt)}</span>
-                <span class="tag">Hold ${portfolioHoldLabel(portfolioEntry)}</span>
-                <span class="tag">${laneLabel(portfolioEntry.lane)}</span>
                 <span class="tag">Size ${compactUsd(portfolioEntry.entryNotionalUsd)}</span>
-                <span class="tag">${portfolioEntry.positionStatus === "closed" ? `Closed ${replayTimestamp(portfolioEntry.closedAt || portfolioEntry.updatedAt)}` : `Live ${portfolioPhase}`}</span>
+                <span class="tag">${laneLabel(portfolioEntry.lane)}</span>
               </div>
               <div class="action-row">
                 ${
@@ -4505,6 +4478,34 @@ function renderInspector(token) {
     }
 
     <div class="subsection">
+      <span class="field-label">What To Do</span>
+      <div class="brief-card ${executionBriefTone(brief)}">
+        <div class="brief-head">
+          <div>
+            <strong>${brief.posture}</strong>
+            <p>${brief.primaryAction}</p>
+          </div>
+          <span class="status-pill ${executionBriefTone(brief) === "muted" ? "deferred" : executionBriefTone(brief)}">${laneLabel(token.warrant?.lane)}</span>
+        </div>
+        <p class="brief-summary">${brief.summary}</p>
+        <div class="brief-grid">
+          <div class="metric-card">
+            <span>成本线</span>
+            <strong>${pct(brief.breakEvenEdgePct || 0)}</strong>
+          </div>
+          <div class="metric-card">
+            <span>剩余空间</span>
+            <strong>${pct(brief.roomAfterCostPct || 0)}</strong>
+          </div>
+          <div class="metric-card">
+            <span>风险资本</span>
+            <strong>${signedCompactUsd(brief.capitalAtRiskUsd || 0)}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
       <span class="field-label">Alert Policy</span>
       <div class="brief-card ${currentPolicyTone}">
         <div class="brief-head">
@@ -4517,10 +4518,6 @@ function renderInspector(token) {
         <div class="tag-row">
           <span class="tag">Unread ${unreadAlertCount}</span>
           <span class="tag">Active ${activeAlertCount}</span>
-          <span class="tag">Resolved ${resolvedAlertCount}</span>
-          <span class="tag">Inbox ${severityFloorLabel(inboxThresholdForSymbol(token.symbol))}</span>
-          <span class="tag">Desktop ${desktopThresholdForSymbol(token.symbol) ? severityFloorLabel(desktopThresholdForSymbol(token.symbol)) : "Off"}</span>
-          ${currentAlertPolicy === "reopened" ? `<span class="tag">${policyReopenedReady ? "Reopen Ready" : "Waiting First Clear"}</span>` : ""}
           ${policySnoozedUntil ? `<span class="tag">Snoozed ${replayTimestamp(policySnoozedUntil)}</span>` : ""}
         </div>
         <div class="policy-mode-row">
@@ -4539,141 +4536,16 @@ function renderInspector(token) {
     </div>
 
     <div class="subsection">
-      <span class="field-label">Execution Brief</span>
-      <div class="brief-card ${executionBriefTone(brief)}">
-        <div class="brief-head">
-          <div>
-            <strong>${brief.posture}</strong>
-            <p>${brief.primaryAction}</p>
-          </div>
-          <span class="status-pill ${executionBriefTone(brief) === "muted" ? "deferred" : executionBriefTone(brief)}">${laneLabel(token.warrant?.lane)}</span>
-        </div>
-        <p class="brief-summary">${brief.summary}</p>
-        <div class="brief-grid">
-          <div class="metric-card">
-            <span>Break-even Edge</span>
-            <strong>${pct(brief.breakEvenEdgePct || 0)}</strong>
-          </div>
-          <div class="metric-card">
-            <span>Room After Cost</span>
-            <strong>${pct(brief.roomAfterCostPct || 0)}</strong>
-          </div>
-          <div class="metric-card">
-            <span>Reward / Cost</span>
-            <strong>${brief.rewardCostRatio != null ? `${brief.rewardCostRatio}x` : "--"}</strong>
-          </div>
-          <div class="metric-card">
-            <span>Capital at Risk</span>
-            <strong>${signedCompactUsd(brief.capitalAtRiskUsd || 0)}</strong>
-          </div>
-        </div>
-        <div class="brief-columns">
-          <div class="brief-column">
-            <span class="field-label">Before Entry</span>
-            <div class="bullet-list">
-              ${(brief.checklist || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-            </div>
-          </div>
-          <div class="brief-column">
-            <span class="field-label">If Wrong</span>
-            <div class="bullet-list">
-              ${(brief.killSwitch || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-            </div>
-          </div>
-          <div class="brief-column">
-            <span class="field-label">Next Review</span>
-            <div class="bullet-list">
-              ${(brief.nextReview || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    ${
-      pm
-        ? `
-          <div class="subsection">
-            <span class="field-label">Postmortem</span>
-            <div class="brief-card ${verdictClass(pm.currentStatus)}">
-              <div class="brief-head">
-                <div>
-                  <strong>${pm.headline}</strong>
-                  <p>${pm.rootCause}</p>
-                </div>
-                <span class="status-pill ${verdictClass(pm.currentStatus)}">${postmortemKindLabel(pm.kind)}</span>
-              </div>
-              <p class="brief-summary">${pm.lesson}</p>
-              <div class="tag-row">
-                <span class="tag">${pm.previousStatus ? `${pm.previousStatus} -> ${pm.currentStatus}` : pm.currentStatus}</span>
-                <span class="tag ${laneClass(pm.lane)}">${laneLabel(pm.lane)}</span>
-                <span class="tag">Avoided ${signedCompactUsd(pm.avoidedLossUsd || 0)}</span>
-              </div>
-              <div class="bullet-list">
-                <div class="bullet-item">${pm.nextScreen}</div>
-              </div>
-            </div>
-          </div>
-        `
-        : ""
-    }
-
-    <div class="subsection">
-      <span class="field-label">Opportunity Bands</span>
-      <div class="tag-row">
-        <span class="tag">${token.warrant?.fitLabel || "Conditional"}</span>
-        <span class="tag ${laneClass(token.warrant?.lane)}">${laneLabel(token.warrant?.lane)}</span>
-        <span class="tag">${opportunityStateLabel(token)}</span>
-        <span class="tag">Band ${token.opportunity?.band || "Unknown"}</span>
-        <span class="tag">Net ${signedCompactUsd(opportunityExpectedNetPnlUsd(token))}</span>
-        <span class="tag">Review ${timeUntil(token.warrant?.expiresAt)}</span>
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Why Now</span>
+      <span class="field-label">If Wrong</span>
       <div class="bullet-list">
-        ${((token.opportunity?.whyNow || []).length ? token.opportunity.whyNow : ["当前没有额外催化变化，先继续跟踪结构变化。"])
-          .map((item) => `<div class="bullet-item">${item}</div>`)
-          .join("")}
+        <div class="bullet-item">${firstRiskRule}</div>
+        <div class="bullet-item">${(token.warrant?.recheckTriggers || [])[0] || "等待新的复审触发器。"}</div>
+        ${pm ? `<div class="bullet-item">${pm.lesson}</div>` : ""}
       </div>
     </div>
 
     <div class="subsection">
-      <span class="field-label">Why It Can Make Money</span>
-      <div class="bullet-list">
-        ${(token.warrant?.reasonChain || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Break Conditions</span>
-      <div class="bullet-list">
-        ${(token.warrant?.invalidationRules || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Review Triggers</span>
-      <div class="bullet-list">
-        ${(token.warrant?.recheckTriggers || []).map((item) => `<div class="bullet-item">${item}</div>`).join("")}
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Market Snapshot</span>
-      <div class="tag-row">
-        <span class="tag">DEX ${price(token.dexPriceUsd)}</span>
-        <span class="tag">Spot ${price(token.spotPrice)}</span>
-        <span class="tag">${token.hasFutures ? `Perp ${price(token.futuresPrice)}` : "No Futures Lane"}</span>
-        <span class="tag">Liq ${compactUsd(token.dexLiquidityUsd)}</span>
-        <span class="tag">Vol ${compactUsd(token.dexVolume24hUsd)}</span>
-        <span class="tag">MCap ${compactUsd(token.marketCapUsd)}</span>
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Opportunity Replay</span>
+      <span class="field-label">Recent Changes</span>
       ${
         replay.length >= 2
           ? `
@@ -4687,7 +4559,6 @@ function renderInspector(token) {
               ${replayChartSvg(token)}
               <div class="tag-row">
                 <span class="tag">Δ PnL ${signedCompactUsd(replaySummary.pnlDeltaUsd)}</span>
-                <span class="tag">Δ Score ${replaySummary.scoreDelta >= 0 ? "+" : ""}${replaySummary.scoreDelta}</span>
                 <span class="tag">Δ Edge ${pct(replaySummary.edgeDeltaPct)}</span>
               </div>
             </div>
@@ -4705,11 +4576,7 @@ function renderInspector(token) {
                     <div class="bullet-item">
                       <strong>${replayTimestamp(snapshot.generatedAt)} · ${snapshot.status} · ${laneLabel(snapshot.lane)}</strong>
                       <div class="tag-row">
-                        <span class="tag">Score ${snapshot.score}</span>
                         <span class="tag">Net ${pct(snapshot.netEdgePct || 0)}</span>
-                        <span class="tag">Gross ${pct(snapshot.grossEdgePct || 0)}</span>
-                        <span class="tag">Cost ${pct(snapshot.executionCostPct || 0)}</span>
-                        <span class="tag">Size ${compactUsd(snapshot.suggestedNotionalUsd)}</span>
                         <span class="tag">PnL ${signedCompactUsd(snapshot.expectedNetPnlUsd)}</span>
                       </div>
                     </div>
@@ -4719,34 +4586,6 @@ function renderInspector(token) {
             : `<div class="bullet-item">还没有足够的历史回放数据。</div>`
         }
       </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">How To Execute</span>
-      <div class="route-list">
-        ${(token.route || [])
-          .map(
-            (step) => `
-              <div class="route-item">
-                <strong>${step.skill}</strong>
-                <span>${step.note}</span>
-              </div>
-            `,
-          )
-          .join("")}
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Risk Flags</span>
-      <div class="tag-row">
-        ${(token.riskFlags || []).length ? token.riskFlags.map((flag) => `<span class="tag">${flag}</span>`).join("") : `<span class="tag">No major red flags</span>`}
-      </div>
-    </div>
-
-    <div class="subsection">
-      <span class="field-label">Share Draft</span>
-      <pre class="memo-box">${token.squareDraft || "暂无发布草稿"}</pre>
     </div>
 
     <div class="action-row">
@@ -5049,6 +4888,7 @@ function render() {
   populateSymbolList();
   renderTopbar();
   renderSummary();
+  renderHeroSpotlight();
   renderCommandDeck();
   renderMandate();
   renderQuickCheck();

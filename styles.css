@@ -131,20 +131,19 @@ input {
 }
 
 .brand-mark {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(243, 186, 47, 0.18), rgba(243, 186, 47, 0.05));
-  border: 1px solid rgba(243, 186, 47, 0.34);
-  color: var(--accent);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
 }
 
-.brand-mark-icon {
-  width: 28px;
-  height: 28px;
+.brand-mark-image {
+  display: block;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
 }
 
 .brand-copy {
@@ -177,10 +176,7 @@ h3 {
 }
 
 .partner-label {
-  font-size: 0.72rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: rgba(255, 227, 156, 0.82);
+  display: none;
 }
 
 .binance-badge {
@@ -204,6 +200,13 @@ h3 {
 .binance-logo {
   width: 18px;
   height: 18px;
+  flex: 0 0 auto;
+}
+
+.binance-badge-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   flex: 0 0 auto;
 }
 
@@ -342,6 +345,80 @@ h3 {
   gap: 18px;
 }
 
+.hero-spotlight {
+  display: grid;
+}
+
+.hero-spotlight-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(243, 186, 47, 0.14), transparent 34%),
+    linear-gradient(160deg, rgba(11, 18, 28, 0.96), rgba(10, 15, 22, 0.88));
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.hero-spotlight-card:hover {
+  transform: translateY(-2px);
+}
+
+.hero-spotlight-card.approved {
+  border-color: rgba(100, 227, 155, 0.24);
+}
+
+.hero-spotlight-card.deferred {
+  border-color: rgba(255, 186, 107, 0.24);
+}
+
+.hero-spotlight-card.revoked,
+.hero-spotlight-card.rejected {
+  border-color: rgba(255, 114, 104, 0.24);
+}
+
+.hero-spotlight-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hero-spotlight-head strong {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+}
+
+.hero-spotlight-head p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.hero-spotlight-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.spotlight-brief {
+  display: grid;
+  gap: 12px;
+}
+
+.spotlight-summary {
+  margin: 0;
+  color: #edf2f8;
+  line-height: 1.55;
+}
+
 .hero-brand-row {
   display: flex;
   justify-content: space-between;
@@ -362,9 +439,15 @@ h3 {
   font-weight: 700;
 }
 
+.hero-chip-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+}
+
 .hero-market-note {
-  color: var(--muted);
-  font-size: 0.92rem;
+  display: none;
 }
 
 .hero-showcase {
@@ -376,6 +459,10 @@ h3 {
   background:
     radial-gradient(circle at top right, rgba(243, 186, 47, 0.16), transparent 32%),
     linear-gradient(160deg, rgba(11, 18, 28, 0.96), rgba(10, 15, 22, 0.88));
+}
+
+.product-hidden {
+  display: none !important;
 }
 
 .hero-showcase-head {
@@ -479,6 +566,10 @@ h3 {
   color: #ffe39c;
 }
 
+.hero-copy > .eyebrow {
+  display: none;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(3.2rem, 7vw, 6rem);
@@ -511,6 +602,10 @@ h2 {
 .inspector-copy,
 .error-copy {
   color: var(--muted);
+}
+
+.section-copy {
+  display: none;
 }
 
 .summary-grid {
@@ -1655,6 +1750,7 @@ input[type="range"] {
 
   .control-grid,
   .inspector-grid,
+  .hero-spotlight-metrics,
   .decision-metrics,
   .command-deck-grid,
   .brief-grid,

@@ -18,26 +18,16 @@
     <header class="shell topbar">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 96 96" class="brand-mark-icon">
-            <path
-              fill="currentColor"
-              d="M48 10 31 27l17 17 17-17L48 10Zm22 22L53 49l17 17 17-17-17-17ZM26 32 9 49l17 17 17-17-17-17Zm22 22L31 71l17 17 17-17-17-17Zm0-22L31 49l17 17 17-17-17-17Z"
-            />
-          </svg>
+          <img src="./assets/binance-logo-card.svg" alt="Binance logo" class="brand-mark-image" width="64" height="64" decoding="async" />
         </span>
         <div class="brand-copy">
           <strong>Goldlane</strong>
-          <span>Real Opportunity Terminal</span>
+          <span>实时机会终端</span>
         </div>
         <div class="brand-partner">
-          <span class="partner-label">Binance Surface</span>
+          <span class="partner-label">Powered by Binance lanes</span>
           <span class="binance-badge">
-            <svg viewBox="0 0 96 96" class="binance-logo" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M48 10 31 27l17 17 17-17L48 10Zm22 22L53 49l17 17 17-17-17-17ZM26 32 9 49l17 17 17-17-17-17Zm22 22L31 71l17 17 17-17-17-17Zm0-22L31 49l17 17 17-17-17-17Z"
-              />
-            </svg>
+            <img src="./assets/binance-logo-card.svg" alt="Binance logo" class="binance-badge-logo" width="24" height="24" decoding="async" />
             <span>Binance</span>
           </span>
         </div>
@@ -56,83 +46,37 @@
         <div class="panel hero-copy">
           <div class="hero-brand-row">
             <span class="hero-market-chip">
-              <svg viewBox="0 0 96 96" class="binance-logo" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M48 10 31 27l17 17 17-17L48 10Zm22 22L53 49l17 17 17-17-17-17ZM26 32 9 49l17 17 17-17-17-17Zm22 22L31 71l17 17 17-17-17-17Zm0-22L31 49l17 17 17-17-17-17Z"
-                />
-              </svg>
-              <span>Binance Opportunity Stack</span>
+              <img src="./assets/binance-logo-card.svg" alt="Binance logo" class="hero-chip-logo" width="26" height="26" decoding="async" />
+              <span>Binance</span>
             </span>
-            <span class="hero-market-note">链上价格发现 + Binance 执行确认 + 风险闸门</span>
           </div>
-          <p class="eyebrow">Real Opportunity Engine</p>
           <h1>
             寻找真实可盈利机会
             <span>不是看起来有机会的机会</span>
           </h1>
           <p class="hero-text">
-            Goldlane 不只是告诉你哪里在动，而是把链上价格、Binance 可执行性、风险和执行摩擦压缩成真正能做的机会。前台展示利润窗口，后台继续拦截假机会。
+            你真正需要的不是更多指标，而是更少误判。Goldlane 会先杀掉假机会，再把真正可执行、利润还活着的窗口推到你面前。
           </p>
           <div id="summaryGrid" class="summary-grid"></div>
         </div>
 
         <div class="panel hero-side">
-          <div class="hero-showcase">
-            <div class="hero-showcase-head">
-              <div>
-                <p class="eyebrow">Binance Signal Lane</p>
-                <h2>把 Binance logo 放进主视觉，不再只是角落装饰</h2>
-              </div>
-              <span class="binance-badge large">
-                <svg viewBox="0 0 96 96" class="binance-logo" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M48 10 31 27l17 17 17-17L48 10Zm22 22L53 49l17 17 17-17-17-17ZM26 32 9 49l17 17 17-17-17-17Zm22 22L31 71l17 17 17-17-17-17Zm0-22L31 49l17 17 17-17-17-17Z"
-                  />
-                </svg>
-                <span>Binance</span>
-              </span>
-            </div>
-            <div class="hero-showcase-core">
-              <div class="hero-emblem-ring">
-                <span class="hero-emblem-glow"></span>
-                <span class="hero-emblem">
-                  <svg viewBox="0 0 96 96" class="hero-emblem-logo" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M48 10 31 27l17 17 17-17L48 10Zm22 22L53 49l17 17 17-17-17-17ZM26 32 9 49l17 17 17-17-17-17Zm22 22L31 71l17 17 17-17-17-17Zm0-22L31 49l17 17 17-17-17-17Z"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div class="hero-showcase-copy">
-                <strong>Binance-first Execution Radar</strong>
-                <p>把 spot、futures、basis 和 fake-edge 过滤收成同一张机会画布。看起来像产品，不像普通监控面板。</p>
-                <div class="hero-lane-row">
-                  <span class="hero-lane-pill">Spot Lane</span>
-                  <span class="hero-lane-pill">Futures Lane</span>
-                  <span class="hero-lane-pill">Basis Lane</span>
-                  <span class="hero-lane-pill danger">Fake Edge Kill</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div id="heroSpotlight" class="hero-spotlight"></div>
 
           <div class="section-head compact-head">
             <div>
-              <p class="eyebrow">Profit Mandate</p>
-              <h2>你的机会筛选边界</h2>
+              <p class="eyebrow">Trading Preferences</p>
+              <h2>你的风险边界</h2>
             </div>
           </div>
           <div id="mandateCard" class="mandate-card"></div>
 
           <div class="quick-check">
-            <label class="field-label" for="quickCheckInput">Opportunity Check</label>
+            <label class="field-label" for="quickCheckInput">Quick Check</label>
             <div class="quick-check-row">
-              <input id="quickCheckInput" list="symbolList" type="text" placeholder="输入 symbol，例如 CAKE" />
+              <input id="quickCheckInput" list="symbolList" type="text" placeholder="输入 symbol，10 秒内给你结论" />
               <datalist id="symbolList"></datalist>
-              <button id="quickCheckButton" class="action-button">立即评估</button>
+              <button id="quickCheckButton" class="action-button">立即判断</button>
             </div>
             <div id="quickCheckResult" class="quick-check-result"></div>
           </div>
@@ -168,10 +112,10 @@
       <section class="panel">
         <div class="section-head">
           <div>
-            <p class="eyebrow">Command Deck</p>
-            <h2>今天先做什么，系统已经替你排好了</h2>
+            <p class="eyebrow">Live Focus</p>
+            <h2>现在先看什么、先做什么</h2>
           </div>
-          <p class="section-copy">把真钱机会、组合风险、市场环境和伪机会过滤压成一张作战卡。先看这里，再决定去翻哪个模块。</p>
+          <p class="section-copy">把真钱机会、伪机会和你自己的持仓压力压成一张行动卡。先看这里，再决定要不要展开更多细节。</p>
         </div>
         <div id="commandDeckPanel" class="command-deck-panel"></div>
       </section>
@@ -182,9 +126,9 @@
             <div class="section-head">
               <div>
                 <p class="eyebrow">Top Opportunities Now</p>
-                <h2>当前最值得处理的真实机会</h2>
+                <h2>当前最值得处理的机会</h2>
               </div>
-              <p class="section-copy">这里不是涨幅榜，而是当前真正具备利润空间、可执行性和时效性的窗口。</p>
+              <p class="section-copy">这里只有真正过了利润、执行和风控过滤的窗口，不是普通涨幅榜。</p>
             </div>
             <div id="approvalDesk" class="decision-grid"></div>
           </section>
@@ -193,9 +137,9 @@
             <div class="section-head">
               <div>
                 <p class="eyebrow">Alert Center</p>
-                <h2>现在最值得立刻处理的提醒</h2>
+                <h2>现在最需要立刻处理的变化</h2>
               </div>
-              <p class="section-copy">这里只放高价值提醒：机会转正、净收益转正、机会失效、短 TTL 复审。</p>
+              <p class="section-copy">这里只保留高价值变化：机会转正、机会失效、净收益转负、短 TTL 复审。</p>
             </div>
             <div id="alertFeed" class="alert-grid"></div>
           </section>
@@ -203,54 +147,10 @@
           <section class="panel">
             <div class="section-head">
               <div>
-                <p class="eyebrow">Regime Ops</p>
-                <h2>今天该偏保守，还是该主动出击</h2>
+                <p class="eyebrow">Opportunity Radar</p>
+                <h2>哪些标的正在升温，哪些正在降级</h2>
               </div>
-              <p class="section-copy">把市场环境、真钱机会密度、假机会占比和你自己的组合压力压成一张操作简报，不用自己手动拼判断。</p>
-            </div>
-            <div id="regimeOpsPanel" class="regime-ops-panel"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Portfolio Watchtower</p>
-                <h2>你的组合现在最需要处理什么</h2>
-              </div>
-              <p class="section-copy">这里只看你已经记成“准备做”的 paper position。它会把 thesis 失效、净边际转负、短 TTL 复审和浮盈扩张拆开说清楚。</p>
-            </div>
-            <div id="portfolioWatchtower" class="review-grid"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">My Position Alerts</p>
-                <h2>把组合风险和机会变化收进自己的提醒箱</h2>
-              </div>
-              <p class="section-copy">这是你的个人 alert inbox。它会收下 watchtower 里真正值得处理的变化，并且在你打开桌面通知后主动提醒。</p>
-            </div>
-            <div id="positionAlertPanel" class="position-alert-panel"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Alert Policy Center</p>
-                <h2>按 symbol 治理提醒，不再只靠全局阈值</h2>
-              </div>
-              <p class="section-copy">你可以把某些标的降成仅 Inbox、只保留高优先，或者彻底静默。真正的提醒系统不该一刀切。</p>
-            </div>
-            <div id="alertPolicyPanel" class="portfolio-panel"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">What Changed</p>
-                <h2>刚刚发生变化的机会</h2>
-              </div>
-              <p class="section-copy">真正该提醒的不是所有波动，而是机会状态、净边际和优先级的跃迁。</p>
+              <p class="section-copy">真正值得盯的不是所有波动，而是那些刚刚进入窗口、或者刚刚失去窗口的标的。</p>
             </div>
             <div id="shiftFeed" class="review-grid"></div>
           </section>
@@ -258,10 +158,10 @@
           <section class="panel">
             <div class="section-head">
               <div>
-                <p class="eyebrow">Killed Fake Opportunities</p>
-                <h2>被系统识别出来的伪机会</h2>
+                <p class="eyebrow">Do Not Touch</p>
+                <h2>这些机会看起来很香，但别碰</h2>
               </div>
-              <p class="section-copy">很多“高利润”其实做不了。这里专门展示那些看起来很诱人、实际上不该碰的窗口。</p>
+              <p class="section-copy">很多高利润都是假的。这里专门展示那些看起来大、实际上做不了的窗口。</p>
             </div>
             <div id="killDesk" class="decision-grid danger-grid"></div>
           </section>
@@ -269,56 +169,34 @@
           <section class="panel">
             <div class="section-head">
               <div>
-                <p class="eyebrow">Postmortem</p>
-                <h2>这些机会为什么不该继续做</h2>
+                <p class="eyebrow">My Watchtower</p>
+                <h2>你自己的组合现在要处理什么</h2>
               </div>
-              <p class="section-copy">把失效窗口、伪机会和成本吃掉利润的案例写清楚，避免用户只看见“错过了什么”，看不见“避免了什么”。</p>
+              <p class="section-copy">这里只看你已经记成“准备做”的机会，优先指出 thesis 失效、净边际转负和短 TTL 复审。</p>
             </div>
-            <div id="postmortemFeed" class="review-grid"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Watch & Recheck</p>
-                <h2>正在形成或需要复审的机会</h2>
-              </div>
-              <p class="section-copy">真正的机会不是永久有效的。确认度、脆弱度和 TTL 变化都会改变它值不值得继续跟。</p>
-            </div>
-            <div id="reapprovalQueue" class="review-grid"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Opportunity Market Board</p>
-                <h2>全量机会队列</h2>
-              </div>
-              <p class="section-copy">每个标的不只是行情行，而是一张带利润空间、执行方式和失败条件的机会卡。</p>
-            </div>
-            <div id="capitalQueue" class="queue-list"></div>
-          </section>
-
-          <section class="panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">Journal Mode</p>
-                <h2>把决策记下来，不只是看过去</h2>
-              </div>
-              <p class="section-copy">你可以把机会记成“准备做 / 加观察 / 明确跳过 / 记为复盘”，形成自己的决策轨迹，而不是每次都从零开始。</p>
-            </div>
-            <div id="journalPanel" class="journal-panel"></div>
+            <div id="portfolioWatchtower" class="review-grid"></div>
           </section>
 
           <section class="panel">
             <div class="section-head">
               <div>
                 <p class="eyebrow">Portfolio Mode</p>
-                <h2>把准备做过的机会，变成持续跟踪的组合</h2>
+                <h2>把你真正关心的机会持续盯住</h2>
               </div>
-              <p class="section-copy">这里不是交易所账户，而是把你记为“准备做”的机会升级成 paper position，持续看 thesis 还在不在、当前浮动如何、什么时候该收手。</p>
+              <p class="section-copy">不是交易所账户，而是你的 paper book。你可以看 thesis 还在不在、当前浮动如何、什么时候该收手。</p>
             </div>
             <div id="portfolioPanel" class="portfolio-panel"></div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Market Board</p>
+                <h2>全量机会队列</h2>
+              </div>
+              <p class="section-copy">当你要扩展搜索范围时，再看这里。它保留全量机会，但仍按可执行性而不是噪音排序。</p>
+            </div>
+            <div id="capitalQueue" class="queue-list"></div>
           </section>
         </div>
 
@@ -327,47 +205,16 @@
         </aside>
       </section>
 
-      <section class="panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Opportunity Engine</p>
-            <h2>这个系统怎样筛出真钱机会</h2>
-          </div>
-          <p class="section-copy">真正的护城河不是接口数量，而是把“什么机会真能赚、什么只是幻觉”制度化成可重复执行的规则。</p>
-        </div>
+      <section class="product-hidden" aria-hidden="true">
+        <div id="regimeOpsPanel" class="regime-ops-panel"></div>
+        <div id="positionAlertPanel" class="position-alert-panel"></div>
+        <div id="alertPolicyPanel" class="portfolio-panel"></div>
+        <div id="postmortemFeed" class="review-grid"></div>
+        <div id="reapprovalQueue" class="review-grid"></div>
+        <div id="journalPanel" class="journal-panel"></div>
         <div id="policyGrid" class="policy-grid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Signal Plane</p>
-            <h2>实时机会背后的数据中台</h2>
-          </div>
-          <p class="section-copy">Binance、DEX、审计和市场上下文一起决定这是不是一个真实可盈利机会，而不是只会闪一下的数据异常。</p>
-        </div>
         <div id="sourceGrid" class="source-grid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Opportunity APIs</p>
-            <h2>给机会终端的内部接口</h2>
-          </div>
-          <p class="section-copy">前端只消费统一的内部合同，未来要接更强数据源或 Skills 时不需要重写产品层。</p>
-        </div>
         <div id="contractGrid" class="contract-grid"></div>
-      </section>
-
-      <section class="panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Pipeline</p>
-            <h2>机会扫描、复审和解释如何分层</h2>
-          </div>
-          <p class="section-copy">真正可用的机会工具必须区分秒级发现、分钟级复审，以及按需生成的解释和发布路径。</p>
-        </div>
         <div id="pipelineGrid" class="pipeline-grid"></div>
       </section>
     </main>

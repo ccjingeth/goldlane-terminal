@@ -1,140 +1,182 @@
 # Goldlane
 
 <p align="center">
+  <img src="./assets/binance-logo-card.svg" alt="Binance logo" width="88" />
+</p>
+
+<p align="center">
+  <strong>真实可盈利机会终端</strong>
+</p>
+
+<p align="center">
+  先筛掉假机会，再把真正可执行、利润还活着的窗口推到你面前。
+</p>
+
+<p align="center">
   <img src="./assets/goldlane-readme-cover.svg" alt="Goldlane cover" width="100%" />
 </p>
 
-<p align="center">
-  <strong>A Binance-first real opportunity terminal for live profit windows.</strong>
-</p>
+## 这是什么
 
-<p align="center">
-  Goldlane does not just show where the market is moving. It ranks which windows are actually tradable,
-  which ones are fake, and how they should be executed.
-</p>
+Goldlane 是一个面向 Binance 场景的实时机会终端。
 
-<p align="center">
-  <img src="https://img.shields.io/badge/UI-Binance%20First-F0B90B?style=flat-square" alt="Binance First UI" />
-  <img src="https://img.shields.io/badge/Transport-SSE%20%2B%20Poll-101828?style=flat-square" alt="SSE and Poll" />
-  <img src="https://img.shields.io/badge/Mode-Live%20%2F%20Degraded%20%2F%20Stale-1F2937?style=flat-square" alt="Realtime modes" />
-  <img src="https://img.shields.io/badge/Frontend-Vanilla%20HTML%20CSS%20JS-0F172A?style=flat-square" alt="Vanilla frontend" />
-</p>
+它不做“全市场热闹榜”，只回答 4 个用户真正关心的问题：
 
-## What Goldlane Is
+1. 现在有没有值得做的机会。
+2. 这个机会是真机会，还是坏市场假象。
+3. 该走 `spot`、`futures`、`basis`，还是先别做。
+4. 如果已经在盯这个机会，什么时候该复审、该撤。
 
-Goldlane is a realtime trading decision terminal built around one core idea:
+一句话：
 
-**Find real profit windows. Kill fake ones.**
+**Goldlane 不是告诉你哪里在涨，而是告诉你哪里真的能做、还能赚、现在值不值得做。**
 
-It combines:
+## 适合谁
 
-- Binance spot and futures execution lanes
-- DEX price discovery and liquidity checks
-- token risk filters
-- opportunity scoring
-- execution briefs
-- postmortems
-- personal watchtower and alert policies
+- 需要同时看 Binance 和链上价格的人
+- 不想被“看起来很大”的假价差骗的人
+- 想把盯盘流程收成一套固定工作台的人
+- 想持续记录自己 thesis、机会和复审节奏的人
 
-The product is deliberately not a generic market dashboard. It is designed to answer:
+## 打开页面先看哪里
 
-1. Is this a real opportunity?
-2. Is it actually executable?
-3. Which lane should I use: `spot`, `futures`, `basis`, or `watch`?
-4. If not, why is it fake?
+### 1. `Opportunity Spotlight`
 
-## Why It Feels Different
+首屏最上方只放当前最值得先看的机会。
 
-Most crypto dashboards optimize for more data. Goldlane optimizes for better decisions.
+你会直接看到：
 
-- It does not rank by noise alone. It ranks by **net executable edge**.
-- It does not treat every spread as alpha. It explicitly kills **broken markets** and **fake edges**.
-- It does not stop at discovery. It returns a structured **Execution Brief**.
-- It does not collapse when upstream live feeds wobble. It falls back to **stale snapshots** instead of dying with a blank error state.
+- 当前状态
+- 预计净收益
+- 建议执行通道
+- 复审时点
 
-## Product Surface
+如果这张卡都不成立，就不需要先翻下面的大盘列表。
 
-The current UI is organized as a full working terminal:
+### 2. `Top Opportunities Now`
 
+这里只放已经通过利润、执行和风控过滤的机会。
+
+每张卡只保留 4 个对交易最有用的字段：
+
+- 能不能做
+- 预估净收益
+- 走哪条 lane
+- 多久后复审
+
+### 3. `Alert Center`
+
+这里只保留高价值变化，不刷噪音。
+
+默认只关心：
+
+- 机会转正
+- 机会失效
+- 净收益转负
+- 临近复审
+
+### 4. `Do Not Touch`
+
+这是反向筛选区。
+
+它专门告诉你哪些窗口“看起来很香，但别碰”，例如：
+
+- 坏市场
+- 失活盘口
+- venue mismatch
+- 成本吃掉利润
+
+### 5. `My Watchtower` / `Portfolio Mode`
+
+这两块只服务你的个人盯盘。
+
+- `My Watchtower`：你已经记成“准备做”的机会，现在有没有 thesis 变坏
+- `Portfolio Mode`：你的 paper position 现在浮动如何、机会还活着没有
+
+## 推荐使用方式
+
+### 盘前
+
+只看两块：
+
+- `Opportunity Spotlight`
 - `Top Opportunities Now`
-- `Command Deck`
-- `Alert Center`
-- `Regime Ops`
-- `Killed Fake Opportunities`
-- `What Changed`
-- `Watch & Recheck`
-- `Opportunity Check`
-- `Execution Brief`
-- `Postmortem`
-- `Journal Mode`
-- `Portfolio Mode`
-- `Portfolio Watchtower`
-- `My Position Alerts`
-- `Alert Policy Center`
 
-## Screenshot
+目标不是看更多，而是先锁定今天值得处理的 1 到 3 个机会。
+
+### 盘中
+
+优先看：
+
+- `Alert Center`
+- `My Watchtower`
+
+目标是处理变化，而不是不停刷新所有数据。
+
+### 下单前
+
+直接用 `Quick Check` 输入 symbol。
+
+它会给你一个简化结论：
+
+- 现在能不能做
+- 应该走什么 lane
+- 预计还能剩多少净边际
+- 多久后要重新看
+
+### 盘后
+
+看：
+
+- `Do Not Touch`
+- `Portfolio Mode`
+
+目标是复盘自己今天避开了什么坑、哪些 thesis 还需要继续盯。
+
+## 页面模块说明
+
+| 模块 | 作用 | 用户为什么需要它 |
+| --- | --- | --- |
+| `Opportunity Spotlight` | 首屏唯一重点机会 | 打开就知道先看什么 |
+| `Top Opportunities Now` | 当前最值得做的机会列表 | 不用自己从全量市场里筛 |
+| `Alert Center` | 只推高价值变化 | 降低噪音，提高反应速度 |
+| `Opportunity Radar` | 看机会在升温还是降级 | 知道现在是进还是等 |
+| `Do Not Touch` | 展示高风险伪机会 | 少踩坑 |
+| `My Watchtower` | 只看你自己的 thesis 风险 | 提醒你先处理自己的问题 |
+| `Portfolio Mode` | 跟踪 paper position | 看机会是否还成立 |
+| `Market Board` | 全量机会队列 | 只有在要扩展搜索范围时才看 |
+| `Inspector` | 当前选中机会的决策面板 | 给出下一步动作，而不是一堆原始指标 |
+
+## 实时模式说明
+
+Goldlane 不会假装所有数据都一样新。
+
+| 模式 | 含义 | 你该怎么理解 |
+| --- | --- | --- |
+| `live` | 核心实时源正常 | 可以作为真实盘中参考 |
+| `degraded` | 部分实时源变慢或缺失 | 可以继续盯，但要更保守 |
+| `stale-fallback` | 上游核心源不可用，系统退回最近有效快照 | 适合监控和复审，不适合高信心新开仓 |
+| `demo-fallback` | 纯前端演示回退 | 只用于本地展示连续性 |
+
+## 界面预览
 
 <p align="center">
   <img src="./ui-validation.png" alt="Goldlane UI screenshot" width="100%" />
 </p>
 
-## Core Loop
-
-```mermaid
-flowchart LR
-  A["DEX + Binance + Risk Feeds"] --> B["Opportunity Scoring"]
-  B --> C["Truth Filter"]
-  C --> D["Execution Lane Selection"]
-  D --> E["Execution Brief"]
-  E --> F["Command Deck"]
-  F --> G["Portfolio Watchtower"]
-  G --> H["My Position Alerts"]
-  C --> I["Killed Fake Opportunities"]
-  D --> J["Postmortem + Replay"]
-```
-
-## Realtime Modes
-
-Goldlane has explicit runtime states instead of pretending every response is equally fresh.
-
-| Mode | Meaning | What the UI should tell the user |
-| --- | --- | --- |
-| `live` | All hot-path sources are healthy enough for full live opportunity scoring | This is the real realtime view |
-| `degraded` | Some sources are stale or partially unavailable, but live scoring still works | Be more selective, source health matters |
-| `stale-fallback` | Core live feeds are unavailable; Goldlane serves the last valid overview or a history-backed emergency snapshot | Good for monitoring and review, not for high-confidence fresh entry |
-| `demo-fallback` | Static front-end fallback | Only for local demo continuity |
-
-## Data Sources
-
-Hot path:
-
-- Binance Spot public market data
-- Binance USD-M futures mark / funding context
-- DexScreener token pairs and liquidity
-
-Medium-speed review layer:
-
-- GoPlus token security
-- CoinGecko market context
-- Fear & Greed regime context
-
-Optional:
-
-- CryptoCompare news status
-
-## Local Run
+## 本地启动
 
 ```bash
 npm start
 ```
 
-Open:
+默认打开：
 
 ```bash
 http://localhost:4173
 ```
 
-Optional environment variables:
+可选环境变量：
 
 ```bash
 HOST=127.0.0.1
@@ -142,9 +184,7 @@ PORT=4173
 RIFT_HTTP_TRANSPORT=fetch
 ```
 
-## API Surface
-
-Main endpoints:
+## 主要接口
 
 - `GET /api/live/overview`
 - `GET /api/live/stream`
@@ -152,15 +192,48 @@ Main endpoints:
 - `GET /api/health`
 - `POST /api/warrant/check`
 
-Detailed contracts live in [`API-CONTRACTS.md`](./API-CONTRACTS.md).
+详细字段合同见：[API-CONTRACTS.md](./API-CONTRACTS.md)
 
-## Repo Structure
+## 数据来源
+
+快路径：
+
+- Binance Spot 公共行情
+- Binance USD-M futures 上下文
+- DexScreener 价格与流动性
+
+中速校验层：
+
+- GoPlus 风险信息
+- CoinGecko 市场上下文
+- Fear & Greed 市场环境
+
+## 当前边界
+
+- 这是 `live beta`，不是官方 Binance Skills 直连产品
+- 预估净收益、机会分数、执行建议都属于内部估算，不是收益承诺
+- Journal、Portfolio、Alert Policy 目前仍是浏览器本地状态
+- 是否进入 `full live` 仍然依赖本机到上游实时源的网络可达性
+
+## 已完成验证
+
+本地已验证：
+
+- `node --check app.js`
+- `node --check server.js`
+- `/api/live/overview` 在上游不可用时会回到 `stale-fallback`，而不是直接 `500`
+- `/api/live/stream` 在 stale 模式下仍会持续推送 `overview`
+- 页面已接入 Binance logo 资源并采用 Binance-first 视觉
+
+## 仓库结构
 
 ```text
 .
 ├── assets/
+│   ├── binance-logo-card.svg
 │   └── goldlane-readme-cover.svg
 ├── data/
+│   ├── last-live-overview.json
 │   └── opportunity-history.json
 ├── index.html
 ├── styles.css
@@ -171,40 +244,10 @@ Detailed contracts live in [`API-CONTRACTS.md`](./API-CONTRACTS.md).
 └── ui-validation.png
 ```
 
-## Validation
+## 接下来最值得做的
 
-Verified locally on `2026-03-18`:
+- 恢复当前机器的稳定 full-live 上游可达性
+- 把个人提醒接到 Telegram / Webhook
+- 把 Portfolio 和 Mandate 做成服务端持久化
+- 增加更清晰的 replay 时间轴和 case memory
 
-- `node --check app.js`
-- `node --check server.js`
-- `/api/live/overview` returns `stale-fallback` instead of `500` when core feeds are down
-- `/api/live/stream` continues pushing `overview` events in stale mode
-- the full page renders with the Binance-first UI and cover-aligned styling
-
-## Current Boundaries
-
-- This is a `live beta`, not an official Binance Skills API integration
-- Estimated PnL and opportunity scores are internal product estimates, not guaranteed returns
-- Journal, portfolio, and alert policy layers are still browser-local
-- The product is resilient to feed failures, but **full live mode still depends on upstream network reachability**
-
-## Roadmap
-
-- Restore stable full-live coverage for Binance + DexScreener on the current machine
-- Add Telegram / webhook delivery for personal alerts
-- Persist personal mandate and portfolio state server-side
-- Add richer replay charts and historical case memory
-
-## Design Direction
-
-Goldlane intentionally avoids looking like a generic crypto dashboard.
-
-- Binance-first visual identity
-- dark glass surfaces with gold accents
-- explicit state language
-- terminal-like decision density
-- strong distinction between real opportunities and fake ones
-
-## License
-
-No license has been added yet. If you want to open-source it formally, add a license before inviting outside contributions.
