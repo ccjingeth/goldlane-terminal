@@ -640,6 +640,7 @@ const dom = {
   quickCheckInput: document.getElementById("quickCheckInput"),
   quickCheckButton: document.getElementById("quickCheckButton"),
   quickCheckResult: document.getElementById("quickCheckResult"),
+  binanceApiPanel: document.getElementById("binanceApiPanel"),
   symbolList: document.getElementById("symbolList"),
   verdictFilters: document.getElementById("verdictFilters"),
   riskSlider: document.getElementById("riskSlider"),
@@ -687,6 +688,27 @@ const state = {
   quickCheckMeta: null,
   quickCheckError: null,
   quickCheckPending: false,
+  binanceSettings: {
+    loading: false,
+    saving: false,
+    testing: false,
+    error: null,
+    configured: false,
+    keyPreview: "",
+    spotBaseUrl: "https://api.binance.com",
+    futuresBaseUrl: "https://fapi.binance.com",
+    validation: {
+      status: "missing",
+      headline: "未配置 Binance API",
+      detail: "配置后可让 Goldlane 优先使用你的 Binance 通道。",
+    },
+    form: {
+      apiKey: "",
+      apiSecret: "",
+      spotBaseUrl: "https://api.binance.com",
+      futuresBaseUrl: "https://fapi.binance.com",
+    },
+  },
   alertSeverityFilter: "All",
   journalEntries: [],
   journalFilter: "All",
@@ -2709,6 +2731,22 @@ function applyOverviewPayload(payload) {
   state.overview = payload;
   state.activeMandate = cloneMandateSettings(payload.userMandate?.settings);
 
+  if (payload.binanceConfig) {
+    state.binanceSettings = {
+      ...state.binanceSettings,
+      configured: Boolean(payload.binanceConfig.configured),
+      keyPreview: payload.binanceConfig.keyPreview || state.binanceSettings.keyPreview,
+      spotBaseUrl: payload.binanceConfig.spotBaseUrl || state.binanceSettings.spotBaseUrl,
+      futuresBaseUrl: payload.binanceConfig.futuresBaseUrl || state.binanceSettings.futuresBaseUrl,
+      validation: payload.binanceConfig.validation || state.binanceSettings.validation,
+      form: {
+        ...state.binanceSettings.form,
+        spotBaseUrl: payload.binanceConfig.spotBaseUrl || state.binanceSettings.form.spotBaseUrl,
+        futuresBaseUrl: payload.binanceConfig.futuresBaseUrl || state.binanceSettings.form.futuresBaseUrl,
+      },
+    };
+  }
+
   if (!draftDirty) {
     state.mandateDraft = cloneMandateSettings(payload.userMandate?.settings);
     state.quickCheckToken = null;
@@ -3217,6 +3255,83 @@ function renderMandate() {
     state.quickCheckMeta = null;
     state.quickCheckError = null;
     startRealtimeSync({ force: true });
+  });
+}
+
+function binanceValidationTone(status) {
+  if (status === "ok") return "live";
+  if (status === "partial") return "warn";
+  if (status === "error") return "error";
+  return "muted";
+}
+
+function renderBinanceApiPanel() {
+  const settings = state.binanceSettings;
+  const validation = settings.validation || {};
+  const tone = binanceValidationTone(validation.status);
+  const hasDraftKey = Boolean((settings.form.apiKey || "").trim());
+  const hasDraftSecret = Boolean((settings.form.apiSecret || "").trim());
+  const saveDisabled =
+    settings.saving ||
+    ((hasDraftKey && !hasDraftSecret && !settings.configured) || (hasDraftSecret && !hasDraftKey && !settings.configured));
+
+  dom.binanceApiPanel.innerHTML = `
+    <div class="section-head compact-head">
+      <div>
+        <p class="eyebrow">Binance API</p>
+        <h2>连接你的 Binance 实时通道</h2>
+      </div>
+      <span class="pill ${tone}">${validation.headline || "未配置 Binance API"}</span>
+    </div>
+    <p class="api-panel-copy">${validation.detail || "配置后可让 Goldlane 优先使用你的 Binance 通道。"}${
+      settings.keyPreview ? ` 当前 Key：${settings.keyPreview}` : ""
+    }</p>
+    <div class="api-panel-grid">
+      <label class="mini-control">
+        <span>API Key</span>
+        <input id="binanceApiKeyInput" class="api-input" type="password" autocomplete="off" placeholder="${settings.keyPreview || "输入 Binance API Key"}" value="${settings.form.apiKey}" />
+      </label>
+      <label class="mini-control">
+        <span>API Secret</span>
+        <input id="binanceApiSecretInput" class="api-input" type="password" autocomplete="off" placeholder="${settings.configured ? "已保存，留空则沿用现有 Secret" : "输入 Binance API Secret"}" value="${settings.form.apiSecret}" />
+      </label>
+      <label class="mini-control">
+        <span>Spot API Base</span>
+        <input id="binanceSpotBaseInput" class="api-input" type="text" value="${settings.form.spotBaseUrl}" />
+      </label>
+      <label class="mini-control">
+        <span>Futures API Base</span>
+        <input id="binanceFuturesBaseInput" class="api-input" type="text" value="${settings.form.futuresBaseUrl}" />
+      </label>
+    </div>
+    <div class="api-panel-actions">
+      <button id="testBinanceApiButton" class="secondary-button" ${settings.testing ? "disabled" : ""}>${settings.testing ? "测试中..." : "测试连接"}</button>
+      <button id="saveBinanceApiButton" class="action-button" ${saveDisabled ? "disabled" : ""}>${settings.saving ? "保存中..." : "保存到 .env"}</button>
+      <button id="clearBinanceApiButton" class="secondary-button" ${settings.saving ? "disabled" : ""}>清除 API</button>
+    </div>
+    ${settings.error ? `<div class="quick-result empty">Binance API：${settings.error}</div>` : ""}
+  `;
+
+  const bindInput = (id, key) => {
+    const input = document.getElementById(id);
+    input?.addEventListener("input", (event) => {
+      state.binanceSettings.form[key] = event.target.value;
+    });
+  };
+
+  bindInput("binanceApiKeyInput", "apiKey");
+  bindInput("binanceApiSecretInput", "apiSecret");
+  bindInput("binanceSpotBaseInput", "spotBaseUrl");
+  bindInput("binanceFuturesBaseInput", "futuresBaseUrl");
+
+  document.getElementById("testBinanceApiButton")?.addEventListener("click", () => {
+    testBinanceApiSettings();
+  });
+  document.getElementById("saveBinanceApiButton")?.addEventListener("click", () => {
+    saveBinanceApiSettings();
+  });
+  document.getElementById("clearBinanceApiButton")?.addEventListener("click", () => {
+    saveBinanceApiSettings({ clearCredentials: true });
   });
 }
 
@@ -4737,6 +4852,137 @@ async function copyText(text, button, successText) {
   }
 }
 
+async function fetchBinanceApiSettings() {
+  state.binanceSettings.loading = true;
+  state.binanceSettings.error = null;
+
+  try {
+    const response = await fetch("/api/settings/binance", {
+      cache: "no-store",
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "读取 Binance API 配置失败");
+    }
+
+    state.binanceSettings = {
+      ...state.binanceSettings,
+      loading: false,
+      saving: false,
+      testing: false,
+      error: null,
+      configured: Boolean(payload.configured),
+      keyPreview: payload.keyPreview || "",
+      spotBaseUrl: payload.spotBaseUrl || "https://api.binance.com",
+      futuresBaseUrl: payload.futuresBaseUrl || "https://fapi.binance.com",
+      validation: payload.validation || state.binanceSettings.validation,
+      form: {
+        apiKey: "",
+        apiSecret: "",
+        spotBaseUrl: payload.spotBaseUrl || "https://api.binance.com",
+        futuresBaseUrl: payload.futuresBaseUrl || "https://fapi.binance.com",
+      },
+    };
+  } catch (error) {
+    state.binanceSettings.loading = false;
+    state.binanceSettings.error = error.message;
+  } finally {
+    renderBinanceApiPanel();
+  }
+}
+
+function binanceSettingsRequestPayload({ clearCredentials = false } = {}) {
+  return {
+    clearCredentials,
+    apiKey: clearCredentials ? "" : state.binanceSettings.form.apiKey,
+    apiSecret: clearCredentials ? "" : state.binanceSettings.form.apiSecret,
+    spotBaseUrl: state.binanceSettings.form.spotBaseUrl,
+    futuresBaseUrl: state.binanceSettings.form.futuresBaseUrl,
+  };
+}
+
+async function testBinanceApiSettings() {
+  state.binanceSettings.testing = true;
+  state.binanceSettings.error = null;
+  renderBinanceApiPanel();
+
+  try {
+    const response = await fetch("/api/settings/binance/test", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(binanceSettingsRequestPayload()),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "Binance API 测试失败");
+    }
+
+    state.binanceSettings = {
+      ...state.binanceSettings,
+      configured: Boolean(payload.configured),
+      keyPreview: payload.keyPreview || state.binanceSettings.keyPreview,
+      spotBaseUrl: payload.spotBaseUrl || state.binanceSettings.spotBaseUrl,
+      futuresBaseUrl: payload.futuresBaseUrl || state.binanceSettings.futuresBaseUrl,
+      validation: payload.validation || state.binanceSettings.validation,
+    };
+  } catch (error) {
+    state.binanceSettings.error = error.message;
+  } finally {
+    state.binanceSettings.testing = false;
+    renderBinanceApiPanel();
+  }
+}
+
+async function saveBinanceApiSettings({ clearCredentials = false } = {}) {
+  state.binanceSettings.saving = true;
+  state.binanceSettings.error = null;
+  renderBinanceApiPanel();
+
+  try {
+    const response = await fetch("/api/settings/binance", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(binanceSettingsRequestPayload({ clearCredentials })),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.error || "保存 Binance API 配置失败");
+    }
+
+    const settings = payload.settings || {};
+    state.binanceSettings = {
+      ...state.binanceSettings,
+      saving: false,
+      testing: false,
+      error: null,
+      configured: Boolean(settings.configured),
+      keyPreview: settings.keyPreview || "",
+      spotBaseUrl: settings.spotBaseUrl || "https://api.binance.com",
+      futuresBaseUrl: settings.futuresBaseUrl || "https://fapi.binance.com",
+      validation: settings.validation || state.binanceSettings.validation,
+      form: {
+        apiKey: "",
+        apiSecret: "",
+        spotBaseUrl: settings.spotBaseUrl || "https://api.binance.com",
+        futuresBaseUrl: settings.futuresBaseUrl || "https://fapi.binance.com",
+      },
+    };
+
+    startRealtimeSync({ force: true });
+  } catch (error) {
+    state.binanceSettings.saving = false;
+    state.binanceSettings.error = error.message;
+    renderBinanceApiPanel();
+    return;
+  }
+
+  renderBinanceApiPanel();
+}
+
 async function fetchOverview({ silent = false } = {}) {
   if (state.loading && silent) return;
 
@@ -4891,6 +5137,7 @@ function render() {
   renderHeroSpotlight();
   renderCommandDeck();
   renderMandate();
+  renderBinanceApiPanel();
   renderQuickCheck();
   renderFilters();
   renderApprovalDesk();
@@ -4951,4 +5198,5 @@ state.journalEntries = loadJournalEntries();
 state.positionAlerts = loadPositionAlerts();
 state.positionAlertPrefs = loadPositionAlertPrefs();
 render();
+fetchBinanceApiSettings();
 startRealtimeSync();

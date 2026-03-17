@@ -218,6 +218,72 @@
 
 用途：
 
+- 下单前快速判断
+- `Quick Check`
+- 未来浏览器插件 / bot / 下单前弹窗
+
+### 6. GET `/api/settings/binance`
+
+用途：
+
+- 读取当前 Binance API 配置状态
+- 前端渲染 `连接你的 Binance 实时通道`
+
+返回重点：
+
+- `configured`
+- `keyPreview`
+- `spotBaseUrl`
+- `futuresBaseUrl`
+- `spotFallbackBaseUrls`
+- `futuresFallbackBaseUrls`
+- `validation`
+
+说明：
+
+- 只返回掩码后的 Key，不返回 Secret
+- `validation.status` 可能是 `missing / ok / partial / error`
+
+### 7. POST `/api/settings/binance/test`
+
+用途：
+
+- 在不写入 `.env` 的情况下测试 Binance API Key / Secret 和基础地址是否可用
+
+请求重点：
+
+- `apiKey`
+- `apiSecret`
+- `spotBaseUrl`
+- `futuresBaseUrl`
+
+返回重点：
+
+- 与 `GET /api/settings/binance` 同结构
+- 但 `validation` 使用当前测试请求的临时配置
+
+### 8. POST `/api/settings/binance`
+
+用途：
+
+- 把 Binance API Key / Secret 和基础地址写入本地 `.env`
+- 写入后立即刷新 Goldlane 的实时链路
+
+请求重点：
+
+- `apiKey`
+- `apiSecret`
+- `spotBaseUrl`
+- `futuresBaseUrl`
+- `clearCredentials`
+
+设计要求：
+
+- `.env` 必须服务端写入，前端不直接接触文件系统
+- Secret 不应回传给前端
+- 保存成功后应立即清空相关 live cache
+- 下一轮 `/api/live/overview` 必须能读取到新的 Binance 配置
+
 - `Quick Check`
 - 浏览器插件
 - Telegram / bot

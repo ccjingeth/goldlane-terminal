@@ -184,6 +184,41 @@ PORT=4173
 RIFT_HTTP_TRANSPORT=fetch
 ```
 
+## 配置 Binance API
+
+Goldlane 现在支持直接在 Web 界面里填写 Binance API，并由后端保存到 `.env`。
+
+推荐做法：
+
+1. 使用只读 API Key / Secret。
+2. 打开首屏右侧的 `连接你的 Binance 实时通道`。
+3. 填入 `API Key`、`API Secret`。
+4. 先点 `测试连接`，再点 `保存到 .env`。
+5. 保存后 Goldlane 会立即重新拉起实时链路。
+
+你也可以手动创建 `.env`：
+
+```bash
+cp .env.example .env
+```
+
+支持的环境变量：
+
+```bash
+BINANCE_API_KEY=
+BINANCE_API_SECRET=
+BINANCE_SPOT_API_BASE=https://api.binance.com
+BINANCE_FUTURES_API_BASE=https://fapi.binance.com
+BINANCE_SPOT_FALLBACK_BASES=https://api1.binance.com,https://api2.binance.com,https://api3.binance.com,https://data-api.binance.vision
+BINANCE_FUTURES_FALLBACK_BASES=https://fapi1.binance.com,https://fapi2.binance.com,https://fapi3.binance.com
+```
+
+说明：
+
+- `.env` 已加入 `.gitignore`
+- 前端不会直接读取你的 Secret
+- Goldlane 会把凭证留在服务端，用来校验连接并增强 Binance 实时链路
+
 ## 主要接口
 
 - `GET /api/live/overview`
@@ -213,7 +248,8 @@ RIFT_HTTP_TRANSPORT=fetch
 - 这是 `live beta`，不是官方 Binance Skills 直连产品
 - 预估净收益、机会分数、执行建议都属于内部估算，不是收益承诺
 - Journal、Portfolio、Alert Policy 目前仍是浏览器本地状态
-- 是否进入 `full live` 仍然依赖本机到上游实时源的网络可达性
+- 是否进入 `full live` 仍然依赖本机到 Binance / DEX 上游的网络可达性
+- Binance API 会显著改善 Goldlane 的接入方式和验证能力，但不能替代本机网络连通性本身
 
 ## 已完成验证
 
@@ -224,6 +260,7 @@ RIFT_HTTP_TRANSPORT=fetch
 - `/api/live/overview` 在上游不可用时会回到 `stale-fallback`，而不是直接 `500`
 - `/api/live/stream` 在 stale 模式下仍会持续推送 `overview`
 - 页面已接入 Binance logo 资源并采用 Binance-first 视觉
+- `/api/settings/binance` 已支持读取、测试并把 Binance API 持久化到 `.env`
 
 ## 仓库结构
 
@@ -250,4 +287,3 @@ RIFT_HTTP_TRANSPORT=fetch
 - 把个人提醒接到 Telegram / Webhook
 - 把 Portfolio 和 Mandate 做成服务端持久化
 - 增加更清晰的 replay 时间轴和 case memory
-

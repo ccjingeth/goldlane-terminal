@@ -1,12 +1,14 @@
 const http = require("http");
 const fs = require("fs/promises");
 const path = require("path");
+const crypto = require("crypto");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
 
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || "127.0.0.1";
 const ROOT = __dirname;
+const ENV_FILE = path.join(ROOT, ".env");
 const CACHE = new Map();
 const LIVE_OVERVIEW_CACHE = new Map();
 const OPPORTUNITY_HISTORY = new Map();
@@ -21,6 +23,8 @@ const execFileAsync = promisify(execFile);
 let HISTORY_LOADED = false;
 let LAST_OVERVIEW_LOADED = false;
 let LAST_OVERVIEW_SNAPSHOT = null;
+let ENV_FILE_LOADED = false;
+let ENV_FILE_VALUES = {};
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -36,6 +40,27 @@ const MIME_TYPES = {
 };
 
 const STABLE_QUOTES = new Set(["USDT", "USDC", "BUSD", "FDUSD", "USDE"]);
+const MANAGED_ENV_KEYS = [
+  "BINANCE_API_KEY",
+  "BINANCE_API_SECRET",
+  "BINANCE_SPOT_API_BASE",
+  "BINANCE_FUTURES_API_BASE",
+  "BINANCE_SPOT_FALLBACK_BASES",
+  "BINANCE_FUTURES_FALLBACK_BASES",
+];
+const DEFAULT_BINANCE_SPOT_BASE = "https://api.binance.com";
+const DEFAULT_BINANCE_FUTURES_BASE = "https://fapi.binance.com";
+const DEFAULT_BINANCE_SPOT_FALLBACKS = [
+  "https://api1.binance.com",
+  "https://api2.binance.com",
+  "https://api3.binance.com",
+  "https://data-api.binance.vision",
+];
+const DEFAULT_BINANCE_FUTURES_FALLBACKS = [
+  "https://fapi1.binance.com",
+  "https://fapi2.binance.com",
+  "https://fapi3.binance.com",
+];
 
 const WATCHLIST = [
   {
@@ -162,6 +187,140 @@ function safeBoolean(value, fallback = false) {
     if (["false", "0", "no", "off"].includes(normalized)) return false;
   }
   return fallback;
+}
+
+function parseEnvFile(raw) {
+  return raw
+    .split(/\r?\n/)
+    .reduce((accumulator, line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) return accumulator;
+      const separatorIndex = trimmed.indexOf("=");
+      if (separatorIndex === -1) return accumulator;
+      const key = trimmed.slice(0, separatorIndex).trim();
+      let value = trimmed.slice(separatorIndex + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      accumulator[key] = value;
+      return accumulator;
+    }, {});
+}
+
+function serializeEnvValue(value) {
+  if (value == null || value === "") return "";
+  if (/^[A-Za-z0-9_./:-]+$/.test(String(value))) return String(value);
+  return JSON.stringify(String(value));
+}
+
+async function loadEnvFile() {
+  if (ENV_FILE_LOADED) return ENV_FILE_VALUES;
+  ENV_FILE_LOADED = true;
+
+  try {
+    const raw = await fs.readFile(ENV_FILE, "utf8");
+    ENV_FILE_VALUES = parseEnvFile(raw);
+    Object.entries(ENV_FILE_VALUES).forEach(([key, value]) => {
+      if (process.env[key] == null || MANAGED_ENV_KEYS.includes(key)) {
+        process.env[key] = value;
+      }
+    });
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error("Failed to load .env file:", error.message);
+    }
+  }
+
+  return ENV_FILE_VALUES;
+}
+
+async function persistManagedEnv(updates) {
+  await loadEnvFile();
+  const nextValues = { ...ENV_FILE_VALUES };
+
+  MANAGED_ENV_KEYS.forEach((key) => {
+    if (!(key in updates)) return;
+    const value = updates[key];
+    if (value == null || value === "") {
+      delete nextValues[key];
+      delete process.env[key];
+      return;
+    }
+    nextValues[key] = String(value);
+    process.env[key] = String(value);
+  });
+
+  ENV_FILE_VALUES = nextValues;
+  const lines = [
+    "# Goldlane local runtime configuration",
+    "# Binance API credentials and endpoint overrides are managed by the app.",
+    "",
+    ...Object.keys(nextValues)
+      .sort()
+      .map((key) => `${key}=${serializeEnvValue(nextValues[key])}`),
+    "",
+  ];
+
+  await fs.writeFile(ENV_FILE, lines.join("\n"), "utf8");
+}
+
+function uniqueBaseUrls(urls) {
+  const seen = new Set();
+  const list = [];
+  urls.forEach((value) => {
+    const normalized = String(value || "").trim().replace(/\/+$/, "");
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    list.push(normalized);
+  });
+  return list;
+}
+
+function parseCsvUrls(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function maskCredential(value) {
+  if (!value) return "";
+  const source = String(value);
+  if (source.length <= 8) return `${source.slice(0, 2)}***${source.slice(-2)}`;
+  return `${source.slice(0, 4)}***${source.slice(-4)}`;
+}
+
+function getBinanceRuntimeConfig() {
+  const apiKey = String(process.env.BINANCE_API_KEY || "").trim();
+  const apiSecret = String(process.env.BINANCE_API_SECRET || "").trim();
+  const spotBaseUrl = String(process.env.BINANCE_SPOT_API_BASE || DEFAULT_BINANCE_SPOT_BASE).trim();
+  const futuresBaseUrl = String(process.env.BINANCE_FUTURES_API_BASE || DEFAULT_BINANCE_FUTURES_BASE).trim();
+  const spotFallbackBaseUrls = uniqueBaseUrls([
+    ...parseCsvUrls(process.env.BINANCE_SPOT_FALLBACK_BASES),
+    ...DEFAULT_BINANCE_SPOT_FALLBACKS,
+  ]);
+  const futuresFallbackBaseUrls = uniqueBaseUrls([
+    ...parseCsvUrls(process.env.BINANCE_FUTURES_FALLBACK_BASES),
+    ...DEFAULT_BINANCE_FUTURES_FALLBACKS,
+  ]);
+
+  return {
+    apiKey,
+    apiSecret,
+    configured: Boolean(apiKey && apiSecret),
+    keyPreview: maskCredential(apiKey),
+    spotBaseUrl,
+    futuresBaseUrl,
+    spotFallbackBaseUrls: uniqueBaseUrls([spotBaseUrl, ...spotFallbackBaseUrls]),
+    futuresFallbackBaseUrls: uniqueBaseUrls([futuresBaseUrl, ...futuresFallbackBaseUrls]),
+  };
+}
+
+function hmacSignature(payload, secret) {
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
 async function loadOpportunityHistory() {
@@ -418,6 +577,128 @@ async function fetchJson(url, options = {}) {
     }
     throw error;
   }
+}
+
+async function fetchJsonFromCandidates(pathname, { baseUrls, headers = {}, timeoutMs = 12000 } = {}) {
+  const errors = [];
+  for (const baseUrl of uniqueBaseUrls(baseUrls || [])) {
+    const url = `${baseUrl}${pathname}`;
+    try {
+      const data = await fetchJson(url, { headers, timeoutMs });
+      return { data, baseUrl, url };
+    } catch (error) {
+      errors.push(`${baseUrl}: ${error.message}`);
+    }
+  }
+
+  throw new Error(errors.length ? `Binance request failed: ${errors.join(" | ")}` : "No Binance base URLs configured");
+}
+
+async function fetchSignedBinanceJson({
+  baseUrl,
+  pathname,
+  apiKey,
+  apiSecret,
+  params = {},
+  timeoutMs = 12000,
+}) {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value == null || value === "") return;
+    searchParams.set(key, String(value));
+  });
+  searchParams.set("timestamp", String(Date.now()));
+  searchParams.set("recvWindow", "5000");
+  const query = searchParams.toString();
+  const signature = hmacSignature(query, apiSecret);
+  return fetchJson(`${baseUrl}${pathname}?${query}&signature=${signature}`, {
+    headers: {
+      "X-MBX-APIKEY": apiKey,
+    },
+    timeoutMs,
+  });
+}
+
+async function validateBinanceCredentials(config = getBinanceRuntimeConfig()) {
+  if (!config.configured) {
+    return {
+      configured: false,
+      status: "missing",
+      headline: "未配置 Binance API",
+      detail: "填入只读 Binance API Key / Secret 后，Goldlane 会优先用你的配置校验连接并增强实时链路。",
+    };
+  }
+
+  const cacheKey = `binance-auth:${maskCredential(config.apiKey)}:${config.spotBaseUrl}:${config.futuresBaseUrl}`;
+  const cached = CACHE.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const [spotAccount, futuresAccount] = await Promise.allSettled([
+    fetchSignedBinanceJson({
+      baseUrl: config.spotBaseUrl,
+      pathname: "/api/v3/account",
+      apiKey: config.apiKey,
+      apiSecret: config.apiSecret,
+    }),
+    fetchSignedBinanceJson({
+      baseUrl: config.futuresBaseUrl,
+      pathname: "/fapi/v2/account",
+      apiKey: config.apiKey,
+      apiSecret: config.apiSecret,
+    }),
+  ]);
+
+  const payload = {
+    configured: true,
+    keyPreview: config.keyPreview,
+    spotBaseUrl: config.spotBaseUrl,
+    futuresBaseUrl: config.futuresBaseUrl,
+    permissions: [],
+    accountType: null,
+    status: "error",
+    headline: "Binance API 校验失败",
+    detail: "请检查 API Key / Secret、权限和基础地址。",
+    checks: {
+      spot:
+        spotAccount.status === "fulfilled"
+          ? { status: "ok", canTrade: Boolean(spotAccount.value.canTrade), accountType: spotAccount.value.accountType || "SPOT" }
+          : { status: "error", error: spotAccount.reason?.message || "spot account failed" },
+      futures:
+        futuresAccount.status === "fulfilled"
+          ? { status: "ok", canTrade: true, totalWalletBalance: futuresAccount.value.totalWalletBalance || null }
+          : { status: "error", error: futuresAccount.reason?.message || "futures account failed" },
+    },
+  };
+
+  if (spotAccount.status === "fulfilled") {
+    payload.permissions = Array.isArray(spotAccount.value.permissions) ? spotAccount.value.permissions : [];
+    payload.accountType = spotAccount.value.accountType || "SPOT";
+  }
+
+  if (spotAccount.status === "fulfilled" || futuresAccount.status === "fulfilled") {
+    payload.status = futuresAccount.status === "fulfilled" && spotAccount.status === "fulfilled" ? "ok" : "partial";
+    payload.headline =
+      payload.status === "ok" ? "Binance API 已验证" : "Binance API 部分可用";
+    payload.detail =
+      payload.status === "ok"
+        ? "Goldlane 已成功验证你的 Binance 凭证，可用于增强实时数据和账户侧连接。"
+        : "凭证至少在一个 Binance 通道上可用，建议继续检查另一个通道或基础地址。";
+  }
+
+  CACHE.set(cacheKey, {
+    data: payload,
+    updatedAt: Date.now(),
+    expiresAt: Date.now() + 60_000,
+  });
+
+  return payload;
+}
+
+function clearLiveCaches() {
+  CACHE.clear();
+  LIVE_OVERVIEW_CACHE.clear();
 }
 
 function encodeSymbols(symbols) {
@@ -1472,14 +1753,27 @@ async function fetchGoPlusSecurity() {
 }
 
 async function fetchBinanceSpot() {
+  const config = getBinanceRuntimeConfig();
   const symbols = WATCHLIST.map((token) => `${token.symbol}USDT`);
+  const headers = config.apiKey
+    ? {
+        "X-MBX-APIKEY": config.apiKey,
+      }
+    : {};
+
   try {
-    const payload = await fetchJson(`https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeSymbols(symbols)}`);
+    const { data: payload } = await fetchJsonFromCandidates(`/api/v3/ticker/24hr?symbols=${encodeSymbols(symbols)}`, {
+      baseUrls: config.spotFallbackBaseUrls,
+      headers,
+    });
     return new Map(payload.map((item) => [item.symbol.replace("USDT", ""), item]));
   } catch (batchError) {
     const results = await Promise.allSettled(
       WATCHLIST.map((token) =>
-        fetchJson(`https://api.binance.com/api/v3/ticker/24hr?symbol=${token.symbol}USDT`).then((item) => ({
+        fetchJsonFromCandidates(`/api/v3/ticker/24hr?symbol=${token.symbol}USDT`, {
+          baseUrls: config.spotFallbackBaseUrls,
+          headers,
+        }).then(({ data: item }) => ({
           symbol: token.symbol,
           item,
         })),
@@ -1499,9 +1793,18 @@ async function fetchBinanceSpot() {
 }
 
 async function fetchBinanceFutures() {
+  const config = getBinanceRuntimeConfig();
+  const headers = config.apiKey
+    ? {
+        "X-MBX-APIKEY": config.apiKey,
+      }
+    : {};
   const results = await Promise.allSettled(
     WATCHLIST.map((token) =>
-      fetchJson(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${token.symbol}USDT`).then((item) => ({
+      fetchJsonFromCandidates(`/fapi/v1/premiumIndex?symbol=${token.symbol}USDT`, {
+        baseUrls: config.futuresFallbackBaseUrls,
+        headers,
+      }).then(({ data: item }) => ({
         symbol: token.symbol,
         item,
       })),
@@ -1523,6 +1826,7 @@ async function fetchNewsStatus() {
 }
 
 async function buildOverview({ mandate: mandateOverride, mutateShiftHistory = false } = {}) {
+  await loadEnvFile();
   await loadOpportunityHistory();
 
   const [dexResult, boostResult, fearResult, geckoResult, securityResult, spotResult, futuresResult, newsResult] = await Promise.all([
@@ -1539,6 +1843,16 @@ async function buildOverview({ mandate: mandateOverride, mutateShiftHistory = fa
   const marketContext = fearResult.data || fallbackContext();
   const generatedAt = new Date().toISOString();
   const mandate = buildMandate(mandateOverride);
+  const binanceConfig = getBinanceRuntimeConfig();
+  const binanceAuth = await validateBinanceCredentials(binanceConfig).catch((error) => ({
+    configured: binanceConfig.configured,
+    keyPreview: binanceConfig.keyPreview,
+    spotBaseUrl: binanceConfig.spotBaseUrl,
+    futuresBaseUrl: binanceConfig.futuresBaseUrl,
+    status: "error",
+    headline: "Binance API 校验失败",
+    detail: error.message,
+  }));
   const previousTimelines = new Map(OPPORTUNITY_TIMELINE);
 
   const tokens = WATCHLIST.map((config) => {
@@ -1784,11 +2098,19 @@ async function buildOverview({ mandate: mandateOverride, mutateShiftHistory = fa
     shiftFeed,
     sourceHealth: {
       binance: summarizeSourceStatus(spotResult, futuresResult),
+      binanceAuth,
       dexscreener: summarizeSingleSource(dexResult),
       goplus: summarizeSingleSource(securityResult),
       coingecko: summarizeSingleSource(geckoResult),
       alternative: summarizeSingleSource(fearResult),
       cryptocompare: summarizeSingleSource(newsResult),
+    },
+    binanceConfig: {
+      configured: binanceConfig.configured,
+      keyPreview: binanceConfig.keyPreview,
+      spotBaseUrl: binanceConfig.spotBaseUrl,
+      futuresBaseUrl: binanceConfig.futuresBaseUrl,
+      validation: binanceAuth,
     },
     tokens,
   };
@@ -2237,15 +2559,135 @@ async function handleLiveStream(req, res, searchParams) {
   await pushOverview({ forceRefresh: force });
 }
 
+async function buildBinanceSettingsResponse({ validate = true } = {}) {
+  await loadEnvFile();
+  const config = getBinanceRuntimeConfig();
+  const validation = validate
+    ? await validateBinanceCredentials(config).catch((error) => ({
+        configured: config.configured,
+        keyPreview: config.keyPreview,
+        spotBaseUrl: config.spotBaseUrl,
+        futuresBaseUrl: config.futuresBaseUrl,
+        status: "error",
+        headline: "Binance API 校验失败",
+        detail: error.message,
+      }))
+    : {
+        configured: config.configured,
+        keyPreview: config.keyPreview,
+        status: config.configured ? "unknown" : "missing",
+        headline: config.configured ? "已保存，等待校验" : "未配置 Binance API",
+        detail: config.configured ? "凭证已保存到 .env。" : "尚未配置 Binance API 凭证。",
+      };
+
+  return {
+    configured: config.configured,
+    keyPreview: config.keyPreview,
+    spotBaseUrl: config.spotBaseUrl,
+    futuresBaseUrl: config.futuresBaseUrl,
+    spotFallbackBaseUrls: config.spotFallbackBaseUrls,
+    futuresFallbackBaseUrls: config.futuresFallbackBaseUrls,
+    validation,
+  };
+}
+
+function sanitizeBaseUrl(value, fallback) {
+  const normalized = String(value || fallback || "").trim().replace(/\/+$/, "");
+  return normalized || fallback;
+}
+
 async function requestListener(req, res) {
   const requestUrl = new URL(req.url, `http://${req.headers.host}`);
 
   if (requestUrl.pathname === "/api/health") {
+    await loadEnvFile();
+    const config = getBinanceRuntimeConfig();
     json(res, 200, {
       ok: true,
       service: "rift-radar",
       time: new Date().toISOString(),
+      binanceApiConfigured: config.configured,
+      binanceKeyPreview: config.keyPreview,
     });
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/settings/binance" && req.method === "GET") {
+    try {
+      json(res, 200, await buildBinanceSettingsResponse({ validate: true }));
+    } catch (error) {
+      json(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/settings/binance/test" && req.method === "POST") {
+    try {
+      await loadEnvFile();
+      const payload = await readJsonBody(req);
+      const current = getBinanceRuntimeConfig();
+      const config = {
+        apiKey: String(payload.apiKey || current.apiKey || "").trim(),
+        apiSecret: String(payload.apiSecret || current.apiSecret || "").trim(),
+        configured: Boolean(String(payload.apiKey || current.apiKey || "").trim() && String(payload.apiSecret || current.apiSecret || "").trim()),
+        keyPreview: maskCredential(String(payload.apiKey || current.apiKey || "").trim()),
+        spotBaseUrl: sanitizeBaseUrl(payload.spotBaseUrl, current.spotBaseUrl),
+        futuresBaseUrl: sanitizeBaseUrl(payload.futuresBaseUrl, current.futuresBaseUrl),
+        spotFallbackBaseUrls: uniqueBaseUrls([
+          sanitizeBaseUrl(payload.spotBaseUrl, current.spotBaseUrl),
+          ...current.spotFallbackBaseUrls,
+        ]),
+        futuresFallbackBaseUrls: uniqueBaseUrls([
+          sanitizeBaseUrl(payload.futuresBaseUrl, current.futuresBaseUrl),
+          ...current.futuresFallbackBaseUrls,
+        ]),
+      };
+      json(res, 200, await buildBinanceSettingsResponse({ validate: false }).then(async (baseline) => ({
+        ...baseline,
+        configured: config.configured,
+        keyPreview: config.keyPreview,
+        spotBaseUrl: config.spotBaseUrl,
+        futuresBaseUrl: config.futuresBaseUrl,
+        validation: await validateBinanceCredentials(config),
+      })));
+    } catch (error) {
+      json(res, 500, { error: error.message });
+    }
+    return;
+  }
+
+  if (requestUrl.pathname === "/api/settings/binance" && req.method === "POST") {
+    try {
+      await loadEnvFile();
+      const payload = await readJsonBody(req);
+      const current = getBinanceRuntimeConfig();
+      const clearCredentials = safeBoolean(payload.clearCredentials, false);
+
+      const updates = {
+        BINANCE_API_KEY: clearCredentials ? "" : String(payload.apiKey || current.apiKey || "").trim(),
+        BINANCE_API_SECRET: clearCredentials ? "" : String(payload.apiSecret || current.apiSecret || "").trim(),
+        BINANCE_SPOT_API_BASE: sanitizeBaseUrl(payload.spotBaseUrl, current.spotBaseUrl),
+        BINANCE_FUTURES_API_BASE: sanitizeBaseUrl(payload.futuresBaseUrl, current.futuresBaseUrl),
+        BINANCE_SPOT_FALLBACK_BASES: uniqueBaseUrls([
+          sanitizeBaseUrl(payload.spotBaseUrl, current.spotBaseUrl),
+          ...DEFAULT_BINANCE_SPOT_FALLBACKS,
+        ]).join(","),
+        BINANCE_FUTURES_FALLBACK_BASES: uniqueBaseUrls([
+          sanitizeBaseUrl(payload.futuresBaseUrl, current.futuresBaseUrl),
+          ...DEFAULT_BINANCE_FUTURES_FALLBACKS,
+        ]).join(","),
+      };
+
+      await persistManagedEnv(updates);
+      clearLiveCaches();
+
+      json(res, 200, {
+        saved: true,
+        settings: await buildBinanceSettingsResponse({ validate: true }),
+      });
+    } catch (error) {
+      json(res, 500, { error: error.message });
+    }
     return;
   }
 
