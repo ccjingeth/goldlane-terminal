@@ -261,6 +261,7 @@ BINANCE_FUTURES_FALLBACK_BASES=https://fapi1.binance.com,https://fapi2.binance.c
 - `/api/live/stream` 在 stale 模式下仍会持续推送 `overview`
 - 页面已接入 Binance logo 资源并采用 Binance-first 视觉
 - `/api/settings/binance` 已支持读取、测试并把 Binance API 持久化到 `.env`
+- `data/last-live-overview.json` 和 `data/opportunity-history.json` 现在改为运行时本地生成，不再污染仓库提交
 
 ## 仓库结构
 
@@ -270,8 +271,7 @@ BINANCE_FUTURES_FALLBACK_BASES=https://fapi1.binance.com,https://fapi2.binance.c
 │   ├── binance-logo-card.svg
 │   └── goldlane-readme-cover.svg
 ├── data/
-│   ├── last-live-overview.json
-│   └── opportunity-history.json
+│   └── .gitkeep
 ├── index.html
 ├── styles.css
 ├── app.js

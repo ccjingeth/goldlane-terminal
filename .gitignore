@@ -1,3 +1,4 @@
 .DS_Store
 .env
 data/last-live-overview.json
+data/opportunity-history.json
