@@ -1,0 +1,93 @@
+<svg width="1500" height="600" viewBox="0 0 1500 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="60" x2="1320" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1018"/>
+      <stop offset="1" stop-color="#121A26"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="314" y1="138" x2="1192" y2="496" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8D12F"/>
+      <stop offset="1" stop-color="#F0B90B"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="rgba(255,255,255,0.11)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0.03)"/>
+    </linearGradient>
+    <filter id="blur" x="-120" y="-120" width="1740" height="840" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+
+  <rect width="1500" height="600" rx="36" fill="url(#bg)"/>
+  <rect x="20" y="20" width="1460" height="560" rx="28" stroke="rgba(255,255,255,0.08)"/>
+
+  <g opacity="0.26" filter="url(#blur)">
+    <circle cx="1180" cy="136" r="130" fill="#F0B90B"/>
+    <circle cx="352" cy="520" r="160" fill="#C48700"/>
+  </g>
+
+  <path d="M94 422C220 334 302 304 414 300C568 294 642 364 786 366C922 368 1008 286 1168 264C1260 252 1346 266 1412 292" stroke="rgba(240,185,11,0.18)" stroke-width="2"/>
+  <path d="M94 454C208 396 286 378 390 380C520 382 620 440 774 438C908 436 1022 340 1148 332C1266 324 1346 354 1412 388" stroke="rgba(240,185,11,0.12)" stroke-width="2"/>
+
+  <g opacity="0.8">
+    <rect x="88" y="82" width="166" height="42" rx="21" fill="rgba(240,185,11,0.12)" stroke="rgba(240,185,11,0.28)"/>
+    <text x="171" y="108" text-anchor="middle" fill="#F8D12F" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">BINANCE-FIRST</text>
+  </g>
+
+  <g transform="translate(102,164)">
+    <g transform="translate(0,6)" fill="url(#gold)">
+      <path d="M48 0L24 24L48 48L72 24L48 0Z"/>
+      <path d="M96 48L72 72L96 96L120 72L96 48Z"/>
+      <path d="M0 48L-24 72L0 96L24 72L0 48Z"/>
+      <path d="M48 96L24 120L48 144L72 120L48 96Z"/>
+      <path d="M48 48L24 72L48 96L72 72L48 48Z"/>
+    </g>
+  </g>
+
+  <text x="282" y="214" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="88" font-weight="800">Goldlane</text>
+  <text x="286" y="264" fill="#D9DEE8" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="500">Real Opportunity Terminal</text>
+  <text x="286" y="320" fill="#F3F6FA" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700">Find real profit windows. Kill fake ones.</text>
+  <text x="286" y="362" fill="#AFB8C7" font-family="Arial, Helvetica, sans-serif" font-size="22">Binance execution lanes, DEX price discovery, stale-safe live monitoring.</text>
+
+  <g transform="translate(940,110)">
+    <rect x="0" y="0" width="432" height="382" rx="28" fill="rgba(11,16,24,0.58)" stroke="rgba(255,255,255,0.1)"/>
+    <rect x="0" y="0" width="432" height="6" rx="3" fill="url(#gold)"/>
+
+    <text x="32" y="50" fill="#F3F6FA" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Today&apos;s Command Deck</text>
+    <text x="32" y="80" fill="#8E98AA" font-family="Arial, Helvetica, sans-serif" font-size="16">Actionable now, fake edge kills, and regime-aware execution.</text>
+
+    <g transform="translate(32,116)">
+      <rect width="368" height="74" rx="18" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+      <rect width="368" height="4" rx="2" fill="#F0B90B"/>
+      <text x="20" y="31" fill="#F8D12F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">APPROVED</text>
+      <text x="20" y="58" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">CAKE  Spot Lane</text>
+      <text x="262" y="58" fill="#C8D0DB" font-family="Arial, Helvetica, sans-serif" font-size="18">Net +0.25%</text>
+    </g>
+
+    <g transform="translate(32,206)">
+      <rect width="368" height="74" rx="18" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+      <rect width="368" height="4" rx="2" fill="#F59E0B"/>
+      <text x="20" y="31" fill="#F5C063" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">WATCH TIGHT</text>
+      <text x="20" y="58" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">TWT  Review Queue</text>
+      <text x="248" y="58" fill="#C8D0DB" font-family="Arial, Helvetica, sans-serif" font-size="18">Thin edge</text>
+    </g>
+
+    <g transform="translate(32,296)">
+      <rect width="368" height="54" rx="18" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+      <rect width="368" height="4" rx="2" fill="#EF4444"/>
+      <text x="20" y="34" fill="#FFFFFF" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">BAKE killed as fake edge</text>
+    </g>
+  </g>
+
+  <g transform="translate(96,474)">
+    <rect x="0" y="0" width="184" height="54" rx="16" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+    <text x="92" y="33" text-anchor="middle" fill="#F3F6FA" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">SSE Live + Poll Fallback</text>
+  </g>
+  <g transform="translate(296,474)">
+    <rect x="0" y="0" width="150" height="54" rx="16" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+    <text x="75" y="33" text-anchor="middle" fill="#F3F6FA" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Stale Snapshot</text>
+  </g>
+  <g transform="translate(462,474)">
+    <rect x="0" y="0" width="176" height="54" rx="16" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)"/>
+    <text x="88" y="33" text-anchor="middle" fill="#F3F6FA" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Execution Briefs</text>
+  </g>
+</svg>
