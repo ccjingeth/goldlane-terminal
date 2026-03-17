@@ -1,0 +1,9 @@
+{
+  "name": "goldlane-terminal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Goldlane: a Binance-first real opportunity terminal for live profit windows.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
